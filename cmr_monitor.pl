@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use utf8;
 use POSIX qw(strftime);
+use 5.010;
 
 use Config::Tiny;
 use Data::Dumper::Concise;
@@ -34,4 +35,13 @@ my $inifile  = q{cmr.ini};
 my $config   = Config::Tiny->read( $inifile, 'utf8' );
 
 {
+    my $name;
+    my $osdd;
+    my $granule;
+    foreach my $key (sort keys %$config) {
+        $name = $config->{$key}->{name};
+        say "Got $name from config" if $name;
+        $osdd = $config->{$key}->{osdd};
+        say "  - Got $osdd for $name" if $osdd;
+    }
 }
