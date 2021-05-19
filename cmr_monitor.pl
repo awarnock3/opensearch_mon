@@ -14,6 +14,11 @@ use LWP::Protocol::https;
 use WWW::Mechanize::Timed;
 use XML::LibXML;
 use XML::LibXML::PrettyPrint;
+use FindBin;
+use File::Spec;
+use lib File::Spec->catdir($FindBin::Bin, '.', 'lib');
+
+use Menu;
 
 =pod
 
@@ -32,8 +37,10 @@ Monitor CMR and remote CWIC hosts for responses. Run out of cron.
 =cut
 
 my $verbose = '';
+my $source = '';
 GetOptions(
     verbose => \$verbose,
+    'source=s' => \$source,
     );
 
 my $inifile = q{cmr.ini};
@@ -48,16 +55,31 @@ my $browser = WWW::Mechanize::Timed->new(
     my $name;
     my $osdd;
     my $granule;
-    foreach my $key (sort keys %$config) {
-        $name = $config->{$key}->{name};
+    if ($source and length $source > 0) {
+        $name = $config->{$source}->{name};
         say "Got $name from config" if $name;
-        $osdd = $config->{$key}->{osdd};
+        $osdd = $config->{$source}->{osdd};
         if ($osdd) {
             say "  - Got $osdd for $name";
             my $osdd_status = get_osdd($osdd);
-            foreach $key (%$osdd_status) {
+            foreach my $key (%$osdd_status) {
                 say "  - $key: " . $osdd_status->{$key}
                 if $osdd_status->{$key};
+            }
+        }
+    }
+    else {
+        foreach my $key (sort keys %$config) {
+            $name = $config->{$key}->{name};
+            say "Got $name from config" if $name;
+            $osdd = $config->{$key}->{osdd};
+            if ($osdd) {
+                say "  - Got $osdd for $name";
+                my $osdd_status = get_osdd($osdd);
+                foreach my $param (%$osdd_status) {
+                    say "  - $param: " . $osdd_status->{$param}
+                    if $osdd_status->{$param};
+                }
             }
         }
     }
@@ -67,24 +89,32 @@ sub get_osdd {
     my $url = shift;
     my %status;
     my $response = $browser->get( $url );
-    $status{code}         = $response->status_line;
+    $status{code}         = $response->code;
+    $status{message}      = $response->message;
     if ($response->is_success) {
         $status{content_type} = $response->content_type;
         $status{total_time}   = $browser->client_total_time;
         $status{elapsed_time} = $browser->client_elapsed_time;
-        my $content = $response->content;
-        $content =~  s/^\s+//;
-        my $document;
-        eval {
-            $document = XML::LibXML->load_xml(string => $content);
-        };
-        if ($@) {
-            say "Failed to parse XML";
-        }
-        else {
-            my $pp = XML::LibXML::PrettyPrint->new(indent_string => "  ");
-            $pp->pretty_print($document); # modified in-place
-            say $document->toString;
+        if ($status{code} == 200) {
+            my $content = $response->content;
+            $content =~  s/^\s+//;
+            my $document;
+            eval {
+                $document = XML::LibXML->new->load_xml(string => $content);
+            };
+            if ($@) {
+                $status{parsed} = "failed";
+                $status{error}  = $@;
+                say "Failed to parse XML: $@" if $verbose;
+            }
+            else {
+                $status{parsed} = "success";
+                if ($verbose) {
+                    my $pp = XML::LibXML::PrettyPrint->new(indent_string => "  ");
+                    $pp->pretty_print($document); # modified in-place
+                    say $document->toString;
+                }
+            }
         }
     }
 
