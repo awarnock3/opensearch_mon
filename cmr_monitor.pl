@@ -17,6 +17,7 @@ use XML::LibXML::PrettyPrint;
 use FindBin;
 use File::Spec;
 use lib File::Spec->catdir($FindBin::Bin, '.', 'lib');
+use Pod::Usage;
 
 use Menu;
 
@@ -24,24 +25,32 @@ use Menu;
 
 =encoding UTF-8
 
-=head1 CMR Monitoring script
+=head1 NAME cmr_monitor.pl - CMR Monitoring script
 
-=head2 NAME cmr_monitor.pl
+=head1 SYNOPSIS
 
-=head2 SYNOPSIS
+./cmr_monitor.pl
 
-Monitor CMR and remote CWIC hosts for responses. Run out of cron.
+Monitor CMR and remote CWIC hosts for responses. Usually run out of cron.
 
 =head1 SUBROUTINES
 
 =cut
 
-my $verbose = '';
-my $source = '';
+my $verbose     = 0;
+my $source      = '';
+my $exit_status = 0;
+my $help        = 0;
+my $man         = 0;
+
 GetOptions(
-    verbose => \$verbose,
-    'source=s' => \$source,
-    );
+    'help|h|?'  => \$help,
+    man         => \$man,
+    'verbose|v' => \$verbose,
+    'source=s'  => \$source,
+    ) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
 my $inifile = q{cmr.ini};
 my $config  = Config::Tiny->read( $inifile, 'utf8' );
@@ -51,6 +60,7 @@ my $browser = WWW::Mechanize::Timed->new(
     ssl_opts => { verify_hostname => 1 }
     );
 
+ MAIN:
 {
     my $name;
     my $osdd;
@@ -83,7 +93,14 @@ my $browser = WWW::Mechanize::Timed->new(
             }
         }
     }
+    exit 1;
 }
+
+=head2 get_osdd($url)
+
+Retrieve the OSDD from the remote source
+
+=cut
 
 sub get_osdd {
     my $url = shift;
@@ -120,3 +137,29 @@ sub get_osdd {
 
     return \%status;
 }
+
+# ABSTRACT: Monitor/test CWIC OpenSearch sources
+__END__
+
+=head1 DESCRIPTION
+
+./cmr_monitor.pl
+
+Test all sources in cmr.ini
+
+./cmr_monitor.pl --source=ccmeo
+
+Test one source in cmr.ini
+
+=head1 AUTHOR
+
+Archie Warnock (warnock@awcubed.com)
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2021 by A/WWW Enterprises under contract to NASA.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
