@@ -18,6 +18,7 @@ use FindBin;
 use File::Spec;
 use lib File::Spec->catdir($FindBin::Bin, '.', 'lib');
 use Pod::Usage;
+use DBI;
 
 use Menu;
 
@@ -42,12 +43,16 @@ my $source      = '';
 my $exit_status = 0;
 my $help        = 0;
 my $man         = 0;
+my $batch       = 0;
+my $save        = 0;
 
 GetOptions(
     'help|h|?'  => \$help,
     man         => \$man,
     'verbose|v' => \$verbose,
     'source=s'  => \$source,
+    batch       => \$batch,
+    save        => \$save,
     ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
@@ -62,38 +67,84 @@ my $browser = WWW::Mechanize::Timed->new(
 
  MAIN:
 {
+    if ($batch) {
+        batch();
+    }
+    elsif ($source) {
+        get_single($source);
+    }
+    else {
+        menu();
+    }
+}
+
+=head2 menu()
+
+Present the interative menu of sources
+
+=cut
+
+sub menu {
+    say "No menu system available yet.";
+}
+
+=head2 batch()
+
+Run in batch mode across all sources
+
+=cut
+
+sub batch {
     my $name;
     my $osdd;
     my $granule;
-    if ($source and length $source > 0) {
-        $name = $config->{$source}->{name};
+
+    foreach my $key (sort keys %$config) {
+        $name = $config->{$key}->{name};
         say "Got $name from config" if $name;
-        $osdd = $config->{$source}->{osdd};
+        $osdd = $config->{$key}->{osdd};
         if ($osdd) {
             say "  - Got $osdd for $name";
             my $osdd_status = get_osdd($osdd);
-            foreach my $key (%$osdd_status) {
+            foreach my $param (%$osdd_status) {
+                say "  - $param: " . $osdd_status->{$param}
+                if $osdd_status->{$param};
+            }
+        }
+    }
+}
+
+=head2 get_single()
+
+Test one specified source
+
+=cut
+
+sub get_single {
+    my $target = shift;
+    
+    my $name;
+    my $osdd;
+    my $granule;
+
+    if ($target and length $target > 0) {
+        $name = $config->{$target}->{name};
+        say "Got $name from config" if $name;
+        $osdd = $config->{$target}->{osdd};
+        if ($osdd) {
+            say "  - Got $osdd for $name";
+            my $osdd_status = get_osdd($osdd);
+            $osdd_status->{source} = uc $target;
+            foreach my $key (sort keys %$osdd_status) {
                 say "  - $key: " . $osdd_status->{$key}
                 if $osdd_status->{$key};
             }
+            db_save($osdd_status) if $save;
         }
     }
     else {
-        foreach my $key (sort keys %$config) {
-            $name = $config->{$key}->{name};
-            say "Got $name from config" if $name;
-            $osdd = $config->{$key}->{osdd};
-            if ($osdd) {
-                say "  - Got $osdd for $name";
-                my $osdd_status = get_osdd($osdd);
-                foreach my $param (%$osdd_status) {
-                    say "  - $param: " . $osdd_status->{$param}
-                    if $osdd_status->{$param};
-                }
-            }
-        }
+        say "No source specified";
     }
-    exit 1;
 }
 
 =head2 get_osdd($url)
@@ -136,6 +187,37 @@ sub get_osdd {
     }
 
     return \%status;
+}
+
+sub db_save {
+    my $status = shift;
+
+    # Database config
+    my $dbname = $config->{database}->{dbname};
+    my $dbuser = $config->{database}->{dbuser};
+    my $dbpass = $config->{database}->{dbpass};
+    my $dsn = qq{dbi:mysql:$dbname};
+
+    my $dbh = DBI->connect($dsn,$dbuser,$dbpass)
+        or die "Couldn't connect to database: " . DBI->errstr;
+    my $sql = q{INSERT INTO monitor 
+                       (id, http_status, total_time, elapsed_time, http_message,
+                        parsed, fk_sourceid)
+                 VALUES (NULL, ?, ?, ?, ?, ?,
+                         (SELECT sourceid FROM source WHERE source = ?))};
+    eval {
+        $dbh->do($sql, {}, $status->{code}, $status->{total_time},
+                 $status->{elapsed_time}, $status->{message},
+                 $status->{parsed}, $status->{source} );
+    };
+    if ($@) {
+        die "Insert failed";
+    }
+    if ($status->{parsed} eq 'failed') {
+        my $monitor_id = $dbh->{mysql_insertid};
+        $dbh->do(q{UPDATE monitor SET error = ? WHERE id = ?},
+                 {}, $status->{error}, $monitor_id);
+    }
 }
 
 # ABSTRACT: Monitor/test CWIC OpenSearch sources

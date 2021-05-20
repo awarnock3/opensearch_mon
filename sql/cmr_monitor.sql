@@ -31,13 +31,13 @@ SET time_zone = "+00:00";
 CREATE TABLE `monitor` (
   `id` int(11) NOT NULL,
   `http_status` int(11) NOT NULL,
-  `total_time` int(11) DEFAULT NULL,
-  `elapsed_time` int(11) DEFAULT NULL,
+  `total_time` float DEFAULT NULL,
+  `elapsed_time` float DEFAULT NULL,
   `http_message` varchar(16) DEFAULT NULL,
   `parsed` varchar(16) DEFAULT NULL,
   `error` varchar(128) DEFAULT NULL,
   `timestamp` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
-  `sourceid` int(11) NOT NULL
+  `fk_sourceid` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -48,9 +48,9 @@ CREATE TABLE `monitor` (
 
 CREATE TABLE `source` (
   `sourceid` int(11) NOT NULL,
-  `source` enum('CMR','CCMEO','EUMETSAT','GHRSST','ISRO','INPE','MOSDAC','USGS','CGEOSS','NRSCC') NOT NULL,
+  `source` enum('CMR','CCMEO','EUMETSAT','GHRSST','ISRO','INPE','MOSDAC','USGS','CGEOSS','NRSCC') NOT NULL UNIQUE,
   `label` varchar(64) NOT NULL,
-  `status` enum('ACTIVE','INACTIVE','UNKNOWN','') NOT NULL
+  `status` enum('ACTIVE','INACTIVE','UNKNOWN','') NOT NULL DEFAULT 'ACTIVE'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -66,7 +66,8 @@ INSERT INTO `source` (`sourceid`, `source`, `label`, `status`) VALUES
 (6, 'INPE', 'INPE (Brazil)', 'INACTIVE'),
 (7, 'MOSDAC', 'ISRO/MOSDAC (India)', 'ACTIVE'),
 (8, 'NRSCC', 'NRSCC (China)', 'UNKNOWN'),
-(9, 'CGEOSS', 'GEOSS (China)', 'UNKNOWN');
+(9, 'CGEOSS', 'GEOSS (China)', 'UNKNOWN'),
+(10, 'USGS', 'USGS/LSI', 'ACTIVE'),;
 
 --
 -- Indexes for dumped tables
