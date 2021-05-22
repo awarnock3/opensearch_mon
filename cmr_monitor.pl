@@ -19,6 +19,7 @@ use File::Spec;
 use lib File::Spec->catdir($FindBin::Bin, '.', 'lib');
 use Pod::Usage;
 use DBI;
+use Encode qw(decode encode);
 
 use Menu;
 
@@ -59,7 +60,10 @@ pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
 my $inifile = q{cmr.ini};
 my $config  = Config::Tiny->read( $inifile, 'utf8' );
-#my $browser = LWP::UserAgent->new();
+#my $browser = LWP::UserAgent->new(
+#    protocols_allowed => ['http', 'https'],
+#    ssl_opts => { verify_hostname => 1 }
+#    );
 my $browser = WWW::Mechanize::Timed->new(
     protocols_allowed => ['http', 'https'],
     ssl_opts => { verify_hostname => 1 }
@@ -164,8 +168,7 @@ sub get_osdd {
         $status{total_time}   = $browser->client_total_time;
         $status{elapsed_time} = $browser->client_elapsed_time;
         if ($status{code} == 200) {
-            my $content = $response->content;
-            $content =~  s/^\s+//;
+            my $content = $response->decoded_content;
             my $document;
             eval {
                 $document = XML::LibXML->new->load_xml(string => $content);
@@ -200,6 +203,7 @@ sub db_save {
 
     my $dbh = DBI->connect($dsn,$dbuser,$dbpass)
         or die "Couldn't connect to database: " . DBI->errstr;
+
     my $sql = q{INSERT INTO monitor 
                        (id, http_status, total_time, elapsed_time, http_message,
                         parsed, fk_sourceid)
@@ -218,6 +222,7 @@ sub db_save {
         $dbh->do(q{UPDATE monitor SET error = ? WHERE id = ?},
                  {}, $status->{error}, $monitor_id);
     }
+    $dbh->disconnect;
 }
 
 # ABSTRACT: Monitor/test CWIC OpenSearch sources
