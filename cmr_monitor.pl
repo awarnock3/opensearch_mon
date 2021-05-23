@@ -31,9 +31,65 @@ use Menu;
 
 =head1 SYNOPSIS
 
-./cmr_monitor.pl
+./cmr_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX]
 
-Monitor CMR and remote CWIC hosts for responses. Usually run out of cron.
+=over 4
+
+Monitor CMR and remote CWIC hosts for responses. Usually run out of cron. There is a single entry available (see --source).
+
+=over 4
+
+--help
+
+=over 2
+
+Show this help
+
+=back
+
+--man
+
+=over 2
+
+Show the man page
+
+=back
+
+--verbose
+
+=over 2
+
+Print extra output, notably retrieved XML
+
+=back
+
+--batch
+
+=over 2
+
+Run in batch mode - test each active provider in cmr.ini
+
+=back
+
+--save
+
+=over 2
+
+Save results to the database
+
+=back
+
+--source=XXX
+
+=over 2
+
+Test just one source specified in cmr.ini
+
+=back
+
+=back
+
+=back
 
 =head1 SUBROUTINES
 
@@ -105,15 +161,16 @@ sub batch {
 
     foreach my $key (sort keys %$config) {
         $name = $config->{$key}->{name};
-        say "Got $name from config" if $name;
+        say "Got $name from config" if ($name and $verbose);
         $osdd = $config->{$key}->{osdd};
         if ($osdd) {
-            say "  - Got $osdd for $name";
+            say "  - Got $osdd for $name" if $verbose;
             my $osdd_status = get_osdd($osdd);
             foreach my $param (%$osdd_status) {
                 say "  - $param: " . $osdd_status->{$param}
-                if $osdd_status->{$param};
+                if ($osdd_status->{$param} and $verbose);
             }
+            db_save($osdd_status) if $save;
         }
     }
 }
@@ -232,11 +289,20 @@ __END__
 
 ./cmr_monitor.pl
 
+=over 4
+
 Test all sources in cmr.ini
+
+=back
 
 ./cmr_monitor.pl --source=ccmeo
 
+=over 4
+
+
 Test one source in cmr.ini
+
+=back
 
 =head1 AUTHOR
 
