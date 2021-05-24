@@ -166,9 +166,12 @@ sub batch {
         if ($osdd) {
             say "  - Got $osdd for $name" if $verbose;
             my $osdd_status = get_osdd($osdd);
-            foreach my $param (%$osdd_status) {
-                say "  - $param: " . $osdd_status->{$param}
-                if ($osdd_status->{$param} and $verbose);
+            $osdd_status->{source} = uc $key;
+            if ($verbose) {
+                foreach my $param (%$osdd_status) {
+                    say "  - $param: " . $osdd_status->{$param}
+                      if ($osdd_status->{$param});
+                }
             }
             db_save($osdd_status) if $save;
         }
@@ -218,10 +221,11 @@ sub get_osdd {
     my $url = shift;
     my %status;
     my $response = $browser->get( $url );
+    $status{request_type} = 'osdd';
+    $status{url}          = $url;
     $status{code}         = $response->code;
-    $status{message}      = $response->message;
+    $status{message}      = $response->status_line;
     if ($response->is_success) {
-        $status{content_type} = $response->content_type;
         $status{total_time}   = $browser->client_total_time;
         $status{elapsed_time} = $browser->client_elapsed_time;
         if ($status{code} == 200) {
@@ -232,8 +236,10 @@ sub get_osdd {
             };
             if ($@) {
                 $status{parsed} = "failed";
-                $status{error}  = $@;
-                say "Failed to parse XML: $@" if $verbose;
+                #                $status{error}  = $@;
+                my $error = $@;
+                $status{error} = $error->{code} . " " . $error->{message};
+                say "Failed to parse XML: $status{error}" if $verbose;
             }
             else {
                 $status{parsed} = "success";
@@ -260,16 +266,14 @@ sub db_save {
 
     my $dbh = DBI->connect($dsn,$dbuser,$dbpass)
         or die "Couldn't connect to database: " . DBI->errstr;
-
     my $sql = q{INSERT INTO monitor 
                        (id, http_status, total_time, elapsed_time, http_message,
-                        parsed, fk_sourceid)
-                 VALUES (NULL, ?, ?, ?, ?, ?,
-                         (SELECT sourceid FROM source WHERE source = ?))};
+                        parsed, fk_source, url)
+                 VALUES (NULL, ?, ?, ?, ?, ?, ?, ?)};
     eval {
         $dbh->do($sql, {}, $status->{code}, $status->{total_time},
                  $status->{elapsed_time}, $status->{message},
-                 $status->{parsed}, $status->{source} );
+                 $status->{parsed}, $status->{source}, $status->{url} );
     };
     if ($@) {
         die "Insert failed";
