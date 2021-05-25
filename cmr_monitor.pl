@@ -212,13 +212,15 @@ sub batch {
         unless ($osdd_only) {
             my $granule_link = $links->{uc $key}->{granule};
             if ($granule_link) {
-                say "  - Got $granule_link for $name";
+                say "  - Got $granule_link for $name" if $verbose;
                 my $get_status = get_granules($granule_link);
                 $get_status->{source} = uc $key;
-                foreach my $key (sort keys %$get_status) {
-                    say "  - $key: " . $get_status->{$key}
-                    if $get_status->{$key};
-                }
+		if ($verbose) {
+		    foreach my $key (sort keys %$get_status) {
+			say "  - $key: " . $get_status->{$key}
+			if $get_status->{$key};
+		    }
+		}
                 db_save($get_status) if $save;
             }
         }
