@@ -19,7 +19,7 @@ use File::Spec;
 use lib File::Spec->catdir($FindBin::Bin, '.', 'lib');
 use Pod::Usage;
 use DBI;
-use Encode qw(decode encode);
+#use Encode qw(decode encode);
 
 use Menu;
 
@@ -31,7 +31,7 @@ use Menu;
 
 =head1 SYNOPSIS
 
-./cmr_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX]
+./cmr_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX|--osdd_only|--granule_only]
 
 =over 4
 
@@ -87,6 +87,22 @@ Test just one source specified in cmr.ini
 
 =back
 
+--osdd_only
+
+=over 2
+
+Just test the OSDD link (skip the granules)
+
+=back
+
+--granule_only
+
+=over 2
+
+Just test the granule request link (skip the OSDD)
+
+=back
+
 =back
 
 =back
@@ -95,21 +111,25 @@ Test just one source specified in cmr.ini
 
 =cut
 
-my $verbose     = 0;
-my $source      = '';
-my $exit_status = 0;
-my $help        = 0;
-my $man         = 0;
-my $batch       = 0;
-my $save        = 0;
+my $verbose      = 0;
+my $source       = '';
+my $exit_status  = 0;
+my $help         = 0;
+my $man          = 0;
+my $batch        = 0;
+my $save         = 0;
+my $osdd_only    = 0;
+my $granule_only = 0;
 
 GetOptions(
-    'help|h|?'  => \$help,
-    man         => \$man,
-    'verbose|v' => \$verbose,
-    'source=s'  => \$source,
-    batch       => \$batch,
-    save        => \$save,
+    'help|h|?'   => \$help,
+    man          => \$man,
+    'verbose|v'  => \$verbose,
+    'source=s'   => \$source,
+    batch        => \$batch,
+    save         => \$save,
+    osdd_only    => \$osdd_only,
+    granule_only => \$granule_only,
     ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
@@ -125,6 +145,17 @@ my $browser = WWW::Mechanize::Timed->new(
     ssl_opts => { verify_hostname => 1 }
     );
 
+# Database config
+my $dbname = $config->{database}->{dbname};
+my $dbuser = $config->{database}->{dbuser};
+my $dbpass = $config->{database}->{dbpass};
+my $dsn = qq{dbi:mysql:$dbname};
+
+my $dbh = DBI->connect($dsn,$dbuser,$dbpass)
+    or die "Couldn't connect to database: " . DBI->errstr;
+
+my $links = get_links_all();
+
  MAIN:
 {
     if ($batch) {
@@ -137,6 +168,7 @@ my $browser = WWW::Mechanize::Timed->new(
         menu();
     }
 }
+$dbh->disconnect;
 
 =head2 menu()
 
@@ -156,24 +188,39 @@ Run in batch mode across all sources
 
 sub batch {
     my $name;
-    my $osdd;
-    my $granule;
 
-    foreach my $key (sort keys %$config) {
-        $name = $config->{$key}->{name};
+    foreach my $key (sort keys %$links) {
+        $name = $links->{uc $key}->{fk_source};
+        next unless is_active($name);
+
         say "Got $name from config" if ($name and $verbose);
-        $osdd = $config->{$key}->{osdd};
-        if ($osdd) {
-            say "  - Got $osdd for $name" if $verbose;
-            my $osdd_status = get_osdd($osdd);
-            $osdd_status->{source} = uc $key;
-            if ($verbose) {
-                foreach my $param (%$osdd_status) {
-                    say "  - $param: " . $osdd_status->{$param}
-                      if ($osdd_status->{$param});
+        unless ($granule_only) {
+            my $osdd_link = $links->{uc $key}->{osdd};
+            if ($osdd_link) {
+                say "  - Got $osdd_link for $name" if $verbose;
+                my $get_status = get_osdd($osdd_link);
+                $get_status->{source} = uc $key;
+                if ($verbose) {
+                    foreach my $param (%$get_status) {
+                        say "  - $param: " . $get_status->{$param}
+                        if ($get_status->{$param});
+                    }
                 }
+                db_save($get_status) if $save;
             }
-            db_save($osdd_status) if $save;
+        }
+        unless ($osdd_only) {
+            my $granule_link = $links->{uc $key}->{granule};
+            if ($granule_link) {
+                say "  - Got $granule_link for $name";
+                my $get_status = get_granules($granule_link);
+                $get_status->{source} = uc $key;
+                foreach my $key (sort keys %$get_status) {
+                    say "  - $key: " . $get_status->{$key}
+                    if $get_status->{$key};
+                }
+                db_save($get_status) if $save;
+            }
         }
     }
 }
@@ -186,24 +233,38 @@ Test one specified source
 
 sub get_single {
     my $target = shift;
+    return unless is_active($target);
     
     my $name;
-    my $osdd;
-    my $granule;
 
     if ($target and length $target > 0) {
-        $name = $config->{$target}->{name};
+        $name = $links->{uc $target}->{fk_source};
         say "Got $name from config" if $name;
-        $osdd = $config->{$target}->{osdd};
-        if ($osdd) {
-            say "  - Got $osdd for $name";
-            my $osdd_status = get_osdd($osdd);
-            $osdd_status->{source} = uc $target;
-            foreach my $key (sort keys %$osdd_status) {
-                say "  - $key: " . $osdd_status->{$key}
-                if $osdd_status->{$key};
+        unless ($granule_only) {
+            my $osdd_link = $links->{uc $target}->{osdd};
+            if ($osdd_link) {
+                say "  - Got $osdd_link for $name";
+                my $get_status = get_osdd($osdd_link);
+                $get_status->{source} = uc $target;
+                foreach my $key (sort keys %$get_status) {
+                    say "  - $key: " . $get_status->{$key}
+                    if $get_status->{$key};
+                }
+                db_save($get_status) if $save;
             }
-            db_save($osdd_status) if $save;
+        }
+        unless ($osdd_only) {
+            my $granule_link = $links->{uc $target}->{granule};
+            if ($granule_link) {
+                say "  - Got $granule_link for $name";
+                my $get_status = get_granules($granule_link);
+                $get_status->{source} = uc $target;
+                foreach my $key (sort keys %$get_status) {
+                    say "  - $key: " . $get_status->{$key}
+                    if $get_status->{$key};
+                }
+                db_save($get_status) if $save;
+            }
         }
     }
     else {
@@ -213,15 +274,41 @@ sub get_single {
 
 =head2 get_osdd($url)
 
-Retrieve the OSDD from the remote source
+Retrieve the OSDD response from the remote source
 
 =cut
 
 sub get_osdd {
     my $url = shift;
+    my $status = process($url);
+    $status->{request_type} = 'osdd';
+    return $status;
+}
+
+=head2 get_granules($url)
+
+Retrieve the granule response from the remote source
+
+=cut
+
+sub get_granules {
+    my $url = shift;
+    my $status = process($url);
+    $status->{request_type} = 'granule';
+    return $status;
+}
+
+=head2 process($url)
+
+Retrieve the response from the URL and attempt to parse it. Return
+the status hash.
+
+=cut
+
+sub process {
+    my $url = shift;
     my %status;
     my $response = $browser->get( $url );
-    $status{request_type} = 'osdd';
     $status{url}          = $url;
     $status{code}         = $response->code;
     $status{message}      = $response->status_line;
@@ -250,41 +337,72 @@ sub get_osdd {
                 }
             }
         }
+        else {
+            $status{parsed} = "failed";
+            $status{error} = "HTTP GET " . $status{code};
+        }
     }
-
+    else {
+        $status{parsed} = "failed";
+        $status{error} = "HTTP GET failed";
+    }
     return \%status;
 }
+
+=head2 db_save($status_hashptr)
+
+Persist the status hash into the database
+
+=cut
 
 sub db_save {
     my $status = shift;
 
-    # Database config
-    my $dbname = $config->{database}->{dbname};
-    my $dbuser = $config->{database}->{dbuser};
-    my $dbpass = $config->{database}->{dbpass};
-    my $dsn = qq{dbi:mysql:$dbname};
-
-    my $dbh = DBI->connect($dsn,$dbuser,$dbpass)
-        or die "Couldn't connect to database: " . DBI->errstr;
     my $sql = q{INSERT INTO monitor 
-                       (id, http_status, total_time, elapsed_time, http_message,
-                        parsed, fk_source, url)
-                 VALUES (NULL, ?, ?, ?, ?, ?, ?, ?)};
+                       (id, request_type, http_status, total_time,
+                        elapsed_time, http_message, parsed, fk_source, url)
+                 VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?)};
     eval {
-        $dbh->do($sql, {}, $status->{code}, $status->{total_time},
-                 $status->{elapsed_time}, $status->{message},
-                 $status->{parsed}, $status->{source}, $status->{url} );
+        $dbh->do($sql, {}, $status->{request_type}, $status->{code},
+                 $status->{total_time}, $status->{elapsed_time},
+                 $status->{message}, $status->{parsed}, $status->{source},
+                 $status->{url} );
     };
     if ($@) {
         die "Insert failed";
     }
-    if ($status->{parsed} eq 'failed') {
+    if (defined $status->{parsed} and $status->{parsed} eq 'failed') {
         my $monitor_id = $dbh->{mysql_insertid};
         $dbh->do(q{UPDATE monitor SET error = ? WHERE id = ?},
                  {}, $status->{error}, $monitor_id);
     }
-    $dbh->disconnect;
 }
+
+=head2 get_links_all
+
+Grab the OSDD and Granule request links from the database
+
+=cut
+
+sub get_links_all {
+    my $sql = q{SELECT fk_source,osdd,granule from links};
+    my $links = $dbh->selectall_hashref($sql, 'fk_source');
+    return $links;
+}
+
+=head2 is_active
+
+Return 1 if the source is activef
+
+=cut
+
+sub is_active {
+    my $source = shift;
+    my $sql = q{SELECT status FROM source where source = ?};
+    my $active = $dbh->selectrow_arrayref($sql, {}, $source);
+    return ($active->[0] eq 'ACTIVE') ? 1 : 0;
+}
+
 
 # ABSTRACT: Monitor/test CWIC OpenSearch sources
 __END__
