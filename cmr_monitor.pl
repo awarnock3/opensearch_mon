@@ -252,6 +252,7 @@ sub options_menu {
     }
     $options->add( 'Return'     => sub{ menu();} );
     $options->print();
+    menu();
 }
 
 =head2 batch()
