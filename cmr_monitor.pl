@@ -20,6 +20,7 @@ use lib File::Spec->catdir($FindBin::Bin, '.', 'lib');
 use Pod::Usage;
 use DBI;
 use Term::ReadKey;
+use File::Basename;
 
 use Menu;
 
@@ -134,7 +135,8 @@ GetOptions(
 pod2usage(1) if $help;
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
-my $inifile = q{./cmr.ini};
+my $dirname = dirname(__FILE__);
+my $inifile = $dirname . q{/cmr.ini};
 my $config  = Config::Tiny->read( $inifile, 'utf8' );
 #my $browser = LWP::UserAgent->new(
 #    protocols_allowed => ['http', 'https'],
