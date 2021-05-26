@@ -19,7 +19,7 @@ use File::Spec;
 use lib File::Spec->catdir($FindBin::Bin, '.', 'lib');
 use Pod::Usage;
 use DBI;
-#use Encode qw(decode encode);
+use Term::ReadKey;
 
 use Menu;
 
@@ -35,7 +35,7 @@ use Menu;
 
 =over 4
 
-Monitor CMR and remote CWIC hosts for responses. Usually run out of cron. There is a single entry available (see --source).
+Monitor CMR and remote CWIC hosts for responses. Usually run out of cron. There is a single entry available (see --source). If neither --source nor --batch are specified, presents a menu for selecting a single source.
 
 =over 4
 
@@ -134,7 +134,7 @@ GetOptions(
 pod2usage(1) if $help;
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
-my $inifile = q{cmr.ini};
+my $inifile = q{./cmr.ini};
 my $config  = Config::Tiny->read( $inifile, 'utf8' );
 #my $browser = LWP::UserAgent->new(
 #    protocols_allowed => ['http', 'https'],
@@ -177,7 +177,79 @@ Present the interative menu of sources
 =cut
 
 sub menu {
-    say "No menu system available yet.";
+    my $menu = Menu->new( );
+    $menu->title( q{Test CWIC Source} );
+
+    my $sources = get_active_sources();
+    foreach my $source (sort keys %$sources) {
+        $menu->add(
+            $sources->{$source}->{label} => sub{
+                get_single( $source );
+                pause();
+                $menu->print();
+            },
+        );
+    }
+
+    # Build the rest of the menu
+    $menu->add(
+        'Options'    => sub{ options_menu(); },
+        );
+    $menu->add(
+        'Exit'       => sub{ $menu->exit(1); },
+        );
+
+    $menu->print();
+}
+
+=head2 options_menu()
+
+Present the menu to set optional parameters
+
+=cut
+
+sub options_menu {
+    my $options = Menu->new( );
+    $options->title( q{Set parameters} );
+
+    if ($save) {
+        $options->add(
+            'Set save off'      => sub{ $save = 0; },
+            );
+    }
+    else {
+        $options->add(
+            'Set save on'       => sub{ $save = 1; },
+            );
+    }
+    if ($verbose) {
+        $options->add(
+            'Set verbose off'   => sub{ $verbose = 0; },
+            );
+    }
+    else {
+        $options->add(
+            'Set verbose on'    => sub{ $verbose = 1; },
+            );
+    }
+    unless ($osdd_only) {
+        $options->add(
+            'Get OSDD only'     => sub{
+                $osdd_only    = 1;
+                $granule_only = 0;
+            },
+            );
+    }
+    unless ($granule_only) {
+        $options->add(
+            'Get granules only' => sub{
+                $granule_only = 1;
+                $osdd_only    = 0;
+            },
+            );
+    }
+    $options->add( 'Return'     => sub{ menu();} );
+    $options->print();
 }
 
 =head2 batch()
@@ -281,7 +353,7 @@ Retrieve the OSDD response from the remote source
 =cut
 
 sub get_osdd {
-    my $url = shift;
+    my $url    = shift;
     my $status = process($url);
     $status->{request_type} = 'osdd';
     return $status;
@@ -294,7 +366,7 @@ Retrieve the granule response from the remote source
 =cut
 
 sub get_granules {
-    my $url = shift;
+    my $url    = shift;
     my $status = process($url);
     $status->{request_type} = 'granule';
     return $status;
@@ -310,10 +382,11 @@ the status hash.
 sub process {
     my $url = shift;
     my %status;
-    my $response = $browser->get( $url );
-    $status{url}          = $url;
-    $status{code}         = $response->code;
-    $status{message}      = $response->status_line;
+    
+    my $response     = $browser->get( $url );
+    $status{url}     = $url;
+    $status{code}    = $response->code;
+    $status{message} = $response->status_line;
     if ($response->is_success) {
         $status{total_time}   = $browser->client_total_time;
         $status{elapsed_time} = $browser->client_elapsed_time;
@@ -341,12 +414,12 @@ sub process {
         }
         else {
             $status{parsed} = "failed";
-            $status{error} = "HTTP GET " . $status{code};
+            $status{error}  = "HTTP GET " . $status{code};
         }
     }
     else {
         $status{parsed} = "failed";
-        $status{error} = "HTTP GET failed";
+        $status{error}  = "HTTP GET failed";
     }
     return \%status;
 }
@@ -387,7 +460,7 @@ Grab the OSDD and Granule request links from the database
 =cut
 
 sub get_links_all {
-    my $sql = q{SELECT fk_source,osdd,granule from links};
+    my $sql   = q{SELECT fk_source,osdd,granule from links};
     my $links = $dbh->selectall_hashref($sql, 'fk_source');
     return $links;
 }
@@ -405,6 +478,31 @@ sub is_active {
     return ($active->[0] eq 'ACTIVE') ? 1 : 0;
 }
 
+=head2 get_active_sources()
+
+Return list of all active sources and labels from Source table
+
+=cut
+
+sub get_active_sources {
+    my $sql = q{SELECT source,label FROM source WHERE status = 'ACTIVE'};
+    my $sources = $dbh->selectall_hashref($sql, 'source');
+    return $sources;
+}
+
+=head2 pause()
+
+Wait for a keypress to continue
+
+=cut
+
+sub pause() {
+    print "Press any key to continue...";
+
+    ReadMode 'cbreak';
+    ReadKey(0);
+    ReadMode 'normal';
+}
 
 # ABSTRACT: Monitor/test CWIC OpenSearch sources
 __END__
