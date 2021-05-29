@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -w
 #
 use strict;
 use warnings;
@@ -202,6 +202,7 @@ sub menu {
         );
 
     $menu->print();
+    return 0;
 }
 
 =head2 options_menu()
@@ -253,6 +254,7 @@ sub options_menu {
     $options->add( 'Return'     => sub{ menu();} );
     $options->print();
     menu();
+    return 0;
 }
 
 =head2 batch()
@@ -300,6 +302,7 @@ sub batch {
             }
         }
     }
+    return 0;
 }
 
 =head2 get_single()
@@ -347,6 +350,7 @@ sub get_single {
     else {
         say "No source specified";
     }
+    return 0;
 }
 
 =head2 get_osdd($url)
@@ -454,6 +458,7 @@ sub db_save {
         $dbh->do(q{UPDATE monitor SET error = ? WHERE id = ?},
                  {}, $status->{error}, $monitor_id);
     }
+    return 0;
 }
 
 =head2 get_links_all
@@ -464,8 +469,8 @@ Grab the OSDD and Granule request links from the database
 
 sub get_links_all {
     my $sql   = q{SELECT fk_source,osdd,granule from links};
-    my $links = $dbh->selectall_hashref($sql, 'fk_source');
-    return $links;
+    my $all_links = $dbh->selectall_hashref($sql, 'fk_source');
+    return $all_links;
 }
 
 =head2 is_active
@@ -475,9 +480,9 @@ Return 1 if the source is activef
 =cut
 
 sub is_active {
-    my $source = shift;
+    my $test_source = shift;
     my $sql = q{SELECT status FROM source where source = ?};
-    my $active = $dbh->selectrow_arrayref($sql, {}, $source);
+    my $active = $dbh->selectrow_arrayref($sql, {}, $test_source);
     return ($active->[0] eq 'ACTIVE') ? 1 : 0;
 }
 
@@ -505,6 +510,7 @@ sub pause() {
     ReadMode 'cbreak';
     ReadKey(0);
     ReadMode 'normal';
+    return 0;
 }
 
 # ABSTRACT: Monitor/test CWIC OpenSearch sources
