@@ -86,6 +86,14 @@ Save results to the database
 
 =back
 
+--mail
+
+=over 2
+
+Send an email alert if any errors occur
+
+=back
+
 --source=XXX
 
 =over 2
@@ -127,17 +135,19 @@ my $batch        = 0;
 my $save         = 0;
 my $osdd_only    = 0;
 my $granule_only = 0;
+my $mail_alert   = 0;
 
 GetOptions(
-    'help|h|?'   => \$help,
-    man          => \$man,
-    'verbose|v'  => \$verbose,
-    'source=s'   => \$source,
-    batch        => \$batch,
-    save         => \$save,
-    osdd_only    => \$osdd_only,
-    granule_only => \$granule_only,
-    ) or pod2usage(2);
+           'help|h|?'   => \$help,
+           man          => \$man,
+           'verbose|v'  => \$verbose,
+           'source=s'   => \$source,
+           batch        => \$batch,
+           save         => \$save,
+           mail         => \$mail_alert,
+           osdd_only    => \$osdd_only,
+           granule_only => \$granule_only,
+          ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
@@ -283,7 +293,7 @@ sub batch {
         say "  - Got $osdd_link for $name" if $verbose;
         my $get_status = get_osdd($osdd_link);
         $get_status->{source} = uc $key;
-        if (defined $get_status->{error}) {
+        if (defined $get_status->{error} and $mail_alert) {
           my $source  = $get_status->{source};
           my $type    = $get_status->{request_type};
           my $subject = qq{CWIC Monitor Alert};
@@ -307,7 +317,7 @@ sub batch {
         say "  - Got $granule_link for $name" if $verbose;
         my $get_status = get_granules($granule_link);
         $get_status->{source} = uc $key;
-        if (defined $get_status->{error}) {
+        if (defined $get_status->{error} and $mail_alert) {
           my $source  = $get_status->{source};
           my $type    = $get_status->{request_type};
           my $subject = qq{CWIC Monitor Alert};
