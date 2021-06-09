@@ -298,7 +298,7 @@ sub batch {
           my $type    = $get_status->{request_type};
           my $subject = qq{CWIC Monitor Alert};
           $subject   .= qq{: $source $type};
-          my $msg     = qq{Error retrieving OSDD:\n};
+          my $msg     = qq{Error retrieving $type:\n};
           $msg       .= Dumper( $get_status );
           mail_alert($subject, $msg);
         }
@@ -322,7 +322,7 @@ sub batch {
           my $type    = $get_status->{request_type};
           my $subject = qq{CWIC Monitor Alert};
           $subject   .= qq{: $source $type};
-          my $msg     = qq{Error retrieving OSDD:\n};
+          my $msg     = qq{Error retrieving $type:\n};
           $msg       .= Dumper( $get_status );
           mail_alert($subject, $msg);
         }
