@@ -154,10 +154,6 @@ pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 my $dirname = dirname(__FILE__);
 my $inifile = $dirname . q{/cmr.ini};
 my $config  = Config::Tiny->read( $inifile, 'utf8' );
-#my $browser = LWP::UserAgent->new(
-#    protocols_allowed => ['http', 'https'],
-#    ssl_opts => { verify_hostname => 1 }
-#    );
 my $browser = WWW::Mechanize::Timed->new(
     protocols_allowed => ['http', 'https'],
     ssl_opts => { verify_hostname => 1 }
@@ -361,8 +357,17 @@ sub get_single {
         my $get_status = get_osdd($osdd_link);
         $get_status->{source} = uc $target;
         foreach my $key (sort keys %$get_status) {
-          say "  - $key: " . $get_status->{$key}
-            if $get_status->{$key};
+          if ($key eq 'osdd_response') {
+            my $osdd_response = $get_status->{$key};
+            foreach my $response (sort keys %$osdd_response) {
+              say "  - OSDD:num <$response>: " . $osdd_response->{$response}
+                if defined $osdd_response->{$response};
+            }
+          }
+          else {
+            say "  - $key: " . $get_status->{$key}
+              if $get_status->{$key};
+          }
         }
         db_save($get_status) if $save;
       }
@@ -372,10 +377,19 @@ sub get_single {
       if ($granule_link) {
         say "  - Got $granule_link for $name";
         my $get_status = get_granules($granule_link);
-        $get_status->{source} = uc $target;
         foreach my $key (sort keys %$get_status) {
-          say "  - $key: " . $get_status->{$key}
-            if $get_status->{$key};
+          $get_status->{source} = uc $target;
+          if ($key eq 'granule_response') {
+            my $granule_response = $get_status->{$key};
+            foreach my $response (sort keys %$granule_response) {
+              say "  - Granule:num <$response>: " . $granule_response->{$response}
+                if defined $granule_response->{$response};
+            }
+          }
+          else {
+            say "  - $key: " . $get_status->{$key}
+              if $get_status->{$key};
+          }
         }
         db_save($get_status) if $save;
       }
@@ -395,8 +409,9 @@ Retrieve the OSDD response from the remote source
 
 sub get_osdd {
   my $url    = shift;
-  my $status = process($url);
-  $status->{request_type} = 'osdd';
+  my $type   = 'osdd';
+  my $status = process($type, $url);
+  $status->{request_type} = $type;
   return $status;
 }
 
@@ -408,12 +423,13 @@ Retrieve the granule response from the remote source
 
 sub get_granules {
   my $url    = shift;
-  my $status = process($url);
-  $status->{request_type} = 'granule';
+  my $type   = 'granule';
+  my $status = process($type, $url);
+  $status->{request_type} = $type;
   return $status;
 }
 
-=head2 process($url)
+=head2 process($type, $url)
 
 Retrieve the response from the URL and attempt to parse it. Return
 the status hash.
@@ -421,7 +437,8 @@ the status hash.
 =cut
 
 sub process {
-  my $url = shift;
+  my $type = shift;
+  my $url  = shift;
   my %status;
 
   my $response     = $browser->get( $url );
@@ -445,6 +462,15 @@ sub process {
       }
       else {
         $status{parsed} = "success";
+        if ($type eq 'osdd') {
+          my $osdd_response = check_osdd_response($document);
+          $status{osdd_response} = $osdd_response;
+        }
+        elsif ($type eq 'granule') {
+          my $granule_response = check_granule_response($document);
+          $status{granule_response} = $granule_response;
+        }
+
         if ($verbose) {
           my $pp = XML::LibXML::PrettyPrint->new(indent_string => "  ");
           $pp->pretty_print($document); # modified in-place
@@ -462,6 +488,65 @@ sub process {
     $status{error}  = "HTTP GET failed";
   }
   return \%status;
+}
+
+=head2 check_osdd_response($document)
+
+Look for necessary contents in the returned document
+
+=cut
+
+sub check_osdd_response {
+  my $dom = shift;
+  my %response;
+
+  my $count = $dom->getElementsByTagName("ShortName");
+  $response{ShortName} = $count->size();
+
+  $count = $dom->getElementsByTagName("Description");
+  $response{Description} = $count->size();
+
+  $count = $dom->getElementsByTagName("Contact");
+  $response{Contact} = $count->size();
+
+  $count = $dom->getElementsByTagName("URL");
+  $response{URL} = $count->size();
+
+  $count = $dom->getElementsByTagName("Query");
+  $response{Query} = $count->size();
+
+  return \%response;
+}
+
+=head2 check_granule_response($document)
+
+Look for necessary contents in the returned document
+
+=cut
+
+sub check_granule_response {
+  my $dom = shift;
+  my %response;
+
+  my $count = $dom->getElementsByTagName("feed");
+  $response{feed} = $count->size();
+
+  $count = $dom->getElementsByTagName("title");
+  $response{title} = $count->size();
+
+  $count = $dom->getElementsByTagName("opensearch:totalResults");
+  $response{totalResults} = $count->size();
+
+  $count = $dom->getElementsByTagName("opensearch:startIndex");
+  $response{startIndex} = $count->size();
+
+  $count = $dom->getElementsByTagName("opensearch:startPage");
+  $response{startPage} = $count->size();
+
+  $count = $dom->getElementsByTagName("opensearch:itemsPerPage");
+  $response{itemsPerPage} = $count->size();
+
+  return \%response;
 }
 
 =head2 db_save($status_hashptr)
