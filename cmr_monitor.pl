@@ -353,6 +353,8 @@ sub get_single {
     unless ($granule_only) {
       my $osdd_link = $links->{uc $target}->{osdd};
       if ($osdd_link) {
+        say "";
+        say "  OSDD response:";
         say "  - Got $osdd_link for $name";
         my $get_status = get_osdd($osdd_link);
         $get_status->{source} = uc $target;
@@ -375,6 +377,8 @@ sub get_single {
     unless ($osdd_only) {
       my $granule_link = $links->{uc $target}->{granule};
       if ($granule_link) {
+        say "";
+        say "  Granule response:";
         say "  - Got $granule_link for $name";
         my $get_status = get_granules($granule_link);
         foreach my $key (sort keys %$get_status) {
