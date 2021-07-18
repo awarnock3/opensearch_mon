@@ -500,6 +500,31 @@ sub check_osdd_response {
   my $dom = shift;
   my %response;
 
+  my $urls = 0;
+  my $queries = 0;
+  foreach my $node ($dom->findnodes( q{//*} )) {
+    my $node_name = $node->nodeName;
+    next if $node_name eq 'OpenSearchDescription';
+    if ($node_name eq 'Url') {
+      my $url_type = $node->getAttribute('type');
+      if ($node->hasAttribute('type') and $url_type eq 'application/atom+xml') {
+#        say "Url: " . $node->getAttribute('type');
+        $urls++;
+      }
+    }
+    elsif ($node_name eq 'Query') {
+      if ($node->hasAttribute('role')) {
+#        say "Query: " . $node->getAttribute('role');
+        $queries++;
+      }
+    }
+    else {
+#      say qq{$node_name: } . $node->textContent;
+    }
+  }
+  $response{Url} = "$urls" . q{ (type='application/atom+xml')};
+  $response{Query} = $queries ;
+
   my $count = $dom->getElementsByTagName("ShortName");
   $response{ShortName} = $count->size();
 
