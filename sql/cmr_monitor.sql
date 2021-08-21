@@ -83,7 +83,7 @@ CREATE TABLE `source` (
   source varchar(10) NOT NULL,
   label varchar(64) NOT NULL,
   status enum('ACTIVE','INACTIVE','UNKNOWN','') NOT NULL DEFAULT 'ACTIVE',
-  current enum('up','down') NOT NULL
+  ping enum('up','down') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
