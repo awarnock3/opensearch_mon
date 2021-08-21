@@ -10,25 +10,21 @@ use Config::Tiny;
 use Data::Dumper::Concise;
 use Getopt::Long;
 use LWP;
+use LWP::UserAgent ();
 use LWP::Protocol::https;
 use WWW::Mechanize::Timed;
 use XML::LibXML;
 use XML::LibXML::PrettyPrint;
 use FindBin;
+use File::Basename;
 use File::Spec;
 use lib File::Spec->catdir($FindBin::Bin, '.', 'lib');
 use Pod::Usage;
 use DBI;
-use Term::ReadKey;
-use File::Basename;
-use Net::SMTP 3.0;
-use Email::Sender::Transport::SMTP;
-use Email::Stuffer;
-use MIME::Types;
-use Authen::SASL qw(Perl);
-
 
 use Menu;
+use Utils;
+use DBUtils;
 
 =pod
 
@@ -102,7 +98,15 @@ Test just one source specified in cmr.ini
 
 =back
 
---osdd_only
+--ping
+
+=over 2
+
+Just ping the selected host
+
+=back
+
+--osdd
 
 =over 2
 
@@ -110,7 +114,7 @@ Just test the OSDD link (skip the granules)
 
 =back
 
---granule_only
+--granule
 
 =over 2
 
@@ -133,20 +137,22 @@ my $help         = 0;
 my $man          = 0;
 my $batch        = 0;
 my $save         = 0;
+my $ping_only    = 0;
 my $osdd_only    = 0;
 my $granule_only = 0;
 my $mail_alert   = 0;
 
 GetOptions(
-           'help|h|?'   => \$help,
-           man          => \$man,
-           'verbose|v'  => \$verbose,
-           'source=s'   => \$source,
-           batch        => \$batch,
-           save         => \$save,
-           mail         => \$mail_alert,
-           osdd_only    => \$osdd_only,
-           granule_only => \$granule_only,
+           'help|h|?'  => \$help,
+           man         => \$man,
+           'verbose|v' => \$verbose,
+           'source=s'  => \$source,
+           batch       => \$batch,
+           save        => \$save,
+           mail        => \$mail_alert,
+           ping        => \$ping_only,
+           osdd        => \$osdd_only,
+           granule     => \$granule_only,
           ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
@@ -154,9 +160,16 @@ pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 my $dirname = dirname(__FILE__);
 my $inifile = $dirname . q{/cmr.ini};
 my $config  = Config::Tiny->read( $inifile, 'utf8' );
-my $browser = WWW::Mechanize::Timed->new(
+my $ua  = LWP::UserAgent->new(
     protocols_allowed => ['http', 'https'],
-    ssl_opts => { verify_hostname => 1 }
+    timeout           => 10,
+);
+$ua->requests_redirectable(['GET', 'HEAD',]);
+$ua->max_redirect( 7 );
+my $browser = WWW::Mechanize::Timed->new(
+    agent             => $ua,
+    protocols_allowed => ['http', 'https'],
+    ssl_opts          => { verify_hostname => 1 }
     );
 
 # Database config
@@ -165,10 +178,10 @@ my $dbuser = $config->{database}->{dbuser};
 my $dbpass = $config->{database}->{dbpass};
 my $dsn    = qq{dbi:mysql:$dbname};
 
-my $dbh = DBI->connect($dsn,$dbuser,$dbpass)
+our $dbh = DBI->connect($dsn,$dbuser,$dbpass)
     or die "Couldn't connect to database: " . DBI->errstr;
 
-my $links = get_links_all();
+my $links = DBUtils::get_links_all($dbh);
 
 MAIN:
 {
@@ -194,12 +207,12 @@ sub menu {
   my $menu = Menu->new( );
   $menu->title( q{Test CWIC Source} );
 
-  my $sources = get_active_sources();
+  my $sources = DBUtils::get_active_sources($dbh);
   foreach my $source (sort keys %$sources) {
     $menu->add(
                $sources->{$source}->{label} => sub{
                  get_single( $source );
-                 pause();
+                 Utils::pause();
                  $menu->print();
                },
               );
@@ -280,10 +293,21 @@ sub batch {
 
   foreach my $key (sort keys %$links) {
     $name = $links->{uc $key}->{fk_source};
-    next unless is_active($name);
+    next unless DBUtils::is_active($dbh, $name);
 
-    say "Got $name from config" if ($name and $verbose);
-    unless ($granule_only) {
+    unless ($osdd_only or $granule_only) {
+      my $head = fetch_head($name);
+      if ($head) {
+        say qq{Source $name is up};
+        $name = $links->{uc $name}->{fk_source};
+        say qq{Got $name from config} if $name and $verbose;
+      }
+      else {
+        say "Source $name is down";
+      }
+    }
+
+    unless ($ping_only or $granule_only) {
       my $osdd_link = $links->{uc $key}->{osdd};
       if ($osdd_link) {
         say "  - Got $osdd_link for $name" if $verbose;
@@ -296,7 +320,7 @@ sub batch {
           $subject   .= qq{: $source $type};
           my $msg     = qq{Error retrieving $type:\n};
           $msg       .= Dumper( $get_status );
-          mail_alert($subject, $msg);
+          Utils::mail_alert($subject, $msg, $config);
         }
         if ($verbose) {
           foreach my $param (%$get_status) {
@@ -304,10 +328,11 @@ sub batch {
               if ($get_status->{$param});
           }
         }
-        db_save($get_status) if $save;
+        DBUtils::db_save($dbh, $get_status) if $save;
       }
     }
-    unless ($osdd_only) {
+
+    unless ($ping_only or $osdd_only) {
       my $granule_link = $links->{uc $key}->{granule};
       if ($granule_link) {
         say "  - Got $granule_link for $name" if $verbose;
@@ -320,7 +345,7 @@ sub batch {
           $subject   .= qq{: $source $type};
           my $msg     = qq{Error retrieving $type:\n};
           $msg       .= Dumper( $get_status );
-          mail_alert($subject, $msg);
+          Utils::mail_alert($subject, $msg, $config);
         }
         if ($verbose) {
           foreach my $key (sort keys %$get_status) {
@@ -328,7 +353,7 @@ sub batch {
               if $get_status->{$key};
           }
         }
-        db_save($get_status) if $save;
+        DBUtils::db_save($dbh, $get_status) if $save;
       }
     }
   }
@@ -343,19 +368,29 @@ Test one specified source
 
 sub get_single {
   my $target = shift;
-  return unless is_active($target);
+  return unless DBUtils::is_active($dbh, $target);
 
   my $name;
 
   if ($target and length $target > 0) {
-    $name = $links->{uc $target}->{fk_source};
-    say "Got $name from config" if $name;
-    unless ($granule_only) {
+    unless ($osdd_only or $granule_only) {
+      my $head = fetch_head($target);
+      if ($head) {
+        say qq{Source $target is up};
+        $name = $links->{uc $target}->{fk_source};
+        say qq{Got $name from config} if $name and $verbose;
+      }
+      else {
+        say "Source $target is down";
+      }
+    }
+
+    unless ($ping_only or $granule_only) {
       my $osdd_link = $links->{uc $target}->{osdd};
       if ($osdd_link) {
         say "";
         say "  OSDD response:";
-        say "  - Got $osdd_link for $name";
+        say "  - Got $osdd_link for $target";
         my $get_status = get_osdd($osdd_link);
         $get_status->{source} = uc $target;
         foreach my $key (sort keys %$get_status) {
@@ -371,15 +406,16 @@ sub get_single {
               if $get_status->{$key};
           }
         }
-        db_save($get_status) if $save;
+        DBUtils::db_save($dbh, $get_status) if $save;
       }
     }
-    unless ($osdd_only) {
+
+    unless ($ping_only or $osdd_only) {
       my $granule_link = $links->{uc $target}->{granule};
       if ($granule_link) {
         say "";
         say "  Granule response:";
-        say "  - Got $granule_link for $name";
+        say "  - Got $granule_link for $target";
         my $get_status = get_granules($granule_link);
         foreach my $key (sort keys %$get_status) {
           $get_status->{source} = uc $target;
@@ -395,9 +431,10 @@ sub get_single {
               if $get_status->{$key};
           }
         }
-        db_save($get_status) if $save;
+        DBUtils::db_save($dbh, $get_status) if $save;
       }
     }
+
   }
   else {
     say "No source specified";
@@ -578,127 +615,99 @@ sub check_granule_response {
   return \%response;
 }
 
-=head2 db_save($status_hashptr)
+=head2 fetch_head
 
-Persist the status hash into the database
+Ping the source via a HEAD request
 
 =cut
 
-sub db_save {
-  my $status = shift;
+sub fetch_head {
+  my $source = shift;
+  return undef unless $source;
+  # say "fetch_head source: $source";
 
-  my $sql = q{INSERT INTO monitor
-                     (id, request_type, http_status, total_time,
-                      elapsed_time, http_message, parsed, fk_source, url)
-              VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?)};
+  my $host = DBUtils::get_base($dbh, $source);
+  return undef unless $host;
+  # say "fetch_head host: $host";
+
+  my $ret;
+  my $url      = $host;
+  my $response = $browser->head( $url );
+  say "Status: " . $browser->status;
+  # say "Response: " . Dumper( $response );
+
+  if ($response->is_success) {
+    say "fetch_head: set $source up" if $verbose;
+    $ret = set_ping(uc $source, 'up');
+  }
+  elsif ($response->is_redirect) {
+    say "fetch_head: set $source redirected" if $verbose;
+    my $location = $browser->response()->header('Location');
+    if (defined $location) {
+      say "Redirected to $location" if $verbose;
+      my $redirect = $browser->head( $location );
+      if ($redirect->is_success) {
+        say "fetch_head: set $source up" if $verbose;
+        $ret = set_ping(uc $source, 'up');
+      }
+      else {
+        say "fetch_head: set $source down" if $verbose;
+        $ret = set_ping(uc $source, 'down');
+      }
+    }
+  }
+  else {
+    say "fetch_head: set $source down" if $verbose;
+    $ret = set_ping(uc $source, 'down');
+  }
+  return $ret;
+}
+
+=head2 get_ping
+
+Get the current value of ping from the source table
+
+=cut
+
+sub get_ping {
+  my $source = shift;
+  return undef unless $source;
+
+  my $sql  = q{SELECT ping FROM source WHERE source = ?};
+  my $pingval;
   eval {
-    $dbh->do($sql, {}, $status->{request_type}, $status->{code},
-             $status->{total_time}, $status->{elapsed_time},
-             $status->{message}, $status->{parsed}, $status->{source},
-             $status->{url} );
+    $pingval = $dbh->selectrow_arrayref($sql, {}, $source);
   };
   if ($@) {
-    die "Insert failed";
+    return undef;
   }
-  if (defined $status->{parsed} and $status->{parsed} eq 'failed') {
-    my $monitor_id = $dbh->{mysql_insertid};
-    $dbh->do(q{UPDATE monitor SET error = ? WHERE id = ?},
-             {}, $status->{error}, $monitor_id);
+  return $pingval->[0];
+}
+
+=head2 set_ping
+
+Save the current value of ping from the source table
+
+=cut
+
+sub set_ping {
+  my $source  = shift;
+  my $pingval = shift;
+  # say "Setting source $source to $pingval";
+  return undef unless $source;
+  return undef unless ($pingval eq 'up' or $pingval eq 'down');
+
+  my $sql = q{UPDATE source SET ping = ? WHERE source = ?};
+  my $ret;
+  eval {
+    $ret = $dbh->do($sql, {}, $pingval, $source);
+  };
+  if ($@) {
+    return undef;
   }
-  return 0;
+  return $ret;
 }
 
-=head2 get_links_all
-
-Grab the OSDD and Granule request links from the database
-
-=cut
-
-sub get_links_all {
-  my $sql       = q{SELECT fk_source,osdd,granule from links};
-  my $all_links = $dbh->selectall_hashref($sql, 'fk_source');
-  return $all_links;
-}
-
-=head2 is_active
-
-Return 1 if the source is activef
-
-=cut
-
-sub is_active {
-  my $test_source = shift;
-  my $sql         = q{SELECT status FROM source where source = ?};
-  my $active      = $dbh->selectrow_arrayref($sql, {}, $test_source);
-  return ($active->[0] eq 'ACTIVE') ? 1 : 0;
-}
-
-=head2 get_active_sources()
-
-Return list of all active sources and labels from Source table
-
-=cut
-
-sub get_active_sources {
-  my $sql     = q{SELECT source,label FROM source WHERE status = 'ACTIVE'};
-  my $sources = $dbh->selectall_hashref($sql, 'source');
-  return $sources;
-}
-
-=head2 pause()
-
-Wait for a keypress to continue
-
-=cut
-
-sub pause() {
-  print "Press any key to continue...";
-
-  ReadMode 'cbreak';
-  ReadKey(0);
-  ReadMode 'normal';
-  return 0;
-}
-
-=pod
-
-=head2 mail_alert($fromname, $response)
-
-Emails an alert to someone
-
-=cut
-
-sub mail_alert {
-  my $subject    = shift;
-  my $profile    = shift;
-
-  my $sender     = $config->{mail}->{sender};
-  my $user       = $config->{mail}->{login};
-  my $password   = $config->{mail}->{password};
-  my $recipients = $config->{mail}->{recipients};
-  my @receivers  = split ",",$recipients;
-
-  #print "Sending to $receivers";
-  my $transport = Email::Sender::Transport::SMTP->new(
-                    {
-                     host          => 'mail.runbox.com',
-                     ssl           => 1,
-                     sasl_username => $user,
-                     sasl_password => $password
-                    }
-                                                     );
-
-    # print "Got MimeType $mime_type for $saved_file";
-  my $msg = Email::Stuffer
-    ->from     ($sender   )
-    ->to       (@receivers)
-    ->text_body($profile  )
-    ->subject  ($subject  )
-    ->transport($transport)
-    ;
-
-  $msg->send;
-}
 
 # ABSTRACT: Monitor/test CWIC OpenSearch sources
 __END__
