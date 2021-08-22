@@ -210,7 +210,12 @@ Ping the source via a HEAD request
     my $ret;
     my $url      = $host;
     my $response = $browser->head( $url );
-    say "Status: " . $browser->status;
+    if (! $response) {
+      say "fetch_head: set $source down" if $verbose;
+      $ret = set_ping(uc $source, 'down');
+      return $ret;
+    }
+    say "HTTP Status: " . $browser->status if $verbose;
     # say "Response: " . Dumper( $response );
 
     if ($response->is_success) {
