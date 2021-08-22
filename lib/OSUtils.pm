@@ -11,7 +11,6 @@ package OSUtils {
 
   use Carp;
   use Exporter;
-  use DBI;
   use XML::LibXML;
   use XML::LibXML::PrettyPrint;
 
@@ -234,6 +233,10 @@ Ping the source via a HEAD request
         }
       }
     }
+    if ($browser->status < 500) {
+      say "fetch_head: set $source up" if $verbose;
+      $ret = set_ping(uc $source, 'up');
+    }
     else {
       say "fetch_head: set $source down" if $verbose;
       $ret = set_ping(uc $source, 'down');
@@ -251,7 +254,9 @@ Get the current value of ping from the source table
     my $source = shift;
     return undef unless $source;
 
-    my $sql  = q{SELECT ping FROM source WHERE source = ?};
+    my $sql  = q{SELECT ping
+                   FROM source
+                  WHERE source = ?};
     my $pingval;
     eval {
       $pingval = $dbh->selectrow_arrayref($sql, {}, $source);
@@ -275,7 +280,9 @@ Save the current value of ping from the source table
     return undef unless $source;
     return undef unless ($pingval eq 'up' or $pingval eq 'down');
 
-    my $sql = q{UPDATE source SET ping = ? WHERE source = ?};
+    my $sql = q{UPDATE source
+                   SET ping = ?
+                 WHERE source = ?};
     my $ret;
     eval {
       $ret = $dbh->do($sql, {}, $pingval, $source);
