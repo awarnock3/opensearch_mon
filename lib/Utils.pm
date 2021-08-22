@@ -13,12 +13,34 @@ package Utils {
   use Carp;
   use Exporter;
   use Term::ReadKey;
-  use File::Basename;
+  use LWP;
+  use LWP::UserAgent ();
+  use LWP::Protocol::https;
+  use WWW::Mechanize::Timed;
   use Net::SMTP 3.0;
   use Email::Sender::Transport::SMTP;
   use Email::Stuffer;
   use MIME::Types;
   use Authen::SASL qw(Perl);
+
+  use Init qw{$config};
+
+  our (@EXPORT, @ISA);     # Global variables
+
+  @ISA = qw(Exporter);      # Take advantage of Exporter's capabilities
+  @EXPORT = qw{$ua $browser};
+
+  my $ua  = LWP::UserAgent->new(
+                                protocols_allowed => ['http', 'https'],
+                                timeout           => 10,
+                               );
+  $ua->requests_redirectable(['GET', 'HEAD',]);
+  $ua->max_redirect( 7 );
+  our $browser = WWW::Mechanize::Timed->new(
+      agent             => $ua,
+      protocols_allowed => ['http', 'https'],
+      ssl_opts          => { verify_hostname => 1 }
+                                           );
 
 =head2 pause()
 
@@ -46,7 +68,6 @@ Emails an alert to someone
   sub mail_alert {
     my $subject = shift;
     my $profile = shift;
-    my $config  = shift;
 
     my $sender     = $config->{mail}->{sender};
     my $user       = $config->{mail}->{login};

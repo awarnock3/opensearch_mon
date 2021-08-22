@@ -13,6 +13,26 @@ package DBUtils {
   use Carp;
   use Exporter;
   use DBI;
+  use Config::Tiny;
+  use Init qw{$config};
+
+  our (@EXPORT, @ISA);     # Global variables
+
+  @ISA = qw(Exporter);      # Take advantage of Exporter's capabilities
+  @EXPORT = qw{$dbh};
+
+#  my $inifile = q{cmr.ini};
+#  my $config  = Config::Tiny->read( $inifile, 'utf8' );
+
+  # Database config
+  my $dbname = $config->{database}->{dbname};
+  my $dbuser = $config->{database}->{dbuser};
+  my $dbpass = $config->{database}->{dbpass};
+  my $dsn    = qq{dbi:mysql:$dbname};
+
+  our $dbh = DBI->connect($dsn,$dbuser,$dbpass)
+    or die "Couldn't connect to database: " . DBI->errstr;
+
 
 =head2 db_save($status_hashptr)
 
@@ -21,7 +41,6 @@ Persist the status hash into the database
 =cut
 
   sub db_save {
-    my $dbh    = shift;
     my $status = shift;
 
     my $sql = q{INSERT INTO monitor
@@ -52,7 +71,6 @@ Grab the OSDD and Granule request links from the database
 =cut
 
   sub get_links_all {
-    my $dbh       = shift;
     my $sql       = q{SELECT fk_source, osdd, granule
                         FROM links};
     my $all_links = $dbh->selectall_hashref($sql, 'fk_source');
@@ -66,7 +84,6 @@ Return 1 if the source is active
 =cut
 
   sub is_active {
-    my $dbh    = shift;
     my $source = shift;
     my $sql    = q{SELECT status
                      FROM source
@@ -82,7 +99,6 @@ Return hostname if the source is active
 =cut
 
   sub get_base {
-    my $dbh    = shift;
     my $source = shift;
     my $sql    = q{SELECT base_url
                      FROM links
@@ -98,7 +114,6 @@ Return list of all active sources and labels from Source table
 =cut
 
   sub get_active_sources {
-    my $dbh     = shift;
     my $sql     = q{SELECT source, label
                       FROM source
                      WHERE status = 'ACTIVE'};
