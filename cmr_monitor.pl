@@ -254,7 +254,7 @@ sub batch {
     unless ($osdd_only or $granule_only) {
       my $head = OSUtils::fetch_head($name);
       if ($head) {
-        say qq{Source $name is up};
+        say qq{Source $name is up} if $verbose;
         $name = $links->{uc $name}->{fk_source};
         say qq{Got $name from config} if $name and $verbose;
       }
