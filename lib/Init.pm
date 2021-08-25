@@ -14,6 +14,7 @@ package Init {
   use Exporter;
   use DBI;
   use Config::Tiny;
+  use FindBin;
 
   our (@EXPORT, @ISA);     # Global variables
 
@@ -21,7 +22,8 @@ package Init {
   @EXPORT = qw{$config $verbose $source $exit_status $help $man $batch
             $save $ping_only $osdd_only $granule_only $mail_alert};
 
-  my $inifile = q{cmr.ini};
+  my $dirname = $FindBin::Bin;
+  my $inifile = qq{$dirname/cmr.ini};
   our $config  = Config::Tiny->read( $inifile, 'utf8' );
 
   our $verbose      = 0;

@@ -21,9 +21,6 @@ package DBUtils {
   @ISA = qw(Exporter);      # Take advantage of Exporter's capabilities
   @EXPORT = qw{$dbh};
 
-#  my $inifile = q{cmr.ini};
-#  my $config  = Config::Tiny->read( $inifile, 'utf8' );
-
   # Database config
   my $dbname = $config->{database}->{dbname};
   my $dbuser = $config->{database}->{dbuser};
