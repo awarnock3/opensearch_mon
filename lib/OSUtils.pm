@@ -215,7 +215,7 @@ Ping the source via a HEAD request
       $ret = set_ping(uc $source, 'down');
       return $ret;
     }
-    say "HTTP Status: " . $browser->status if $verbose;
+    say "HTTP Status: " . $response->code if $verbose;
     # say "Response: " . Dumper( $response );
 
     if ($response->is_success) {
@@ -238,7 +238,7 @@ Ping the source via a HEAD request
         }
       }
     }
-    if ($browser->status < 500) {
+    if ($response->code < 500) {
       say "fetch_head: set $source up" if $verbose;
       $ret = set_ping(uc $source, 'up');
     }

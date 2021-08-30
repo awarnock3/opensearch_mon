@@ -28,16 +28,9 @@ package Utils {
   our (@EXPORT, @ISA);     # Global variables
 
   @ISA = qw(Exporter);      # Take advantage of Exporter's capabilities
-  @EXPORT = qw{$ua $browser};
+  @EXPORT = qw{$browser};
 
-  my $ua  = LWP::UserAgent->new(
-                                protocols_allowed => ['http', 'https'],
-                                timeout           => 10,
-                               );
-  $ua->requests_redirectable(['GET', 'HEAD',]);
-  $ua->max_redirect( 7 );
   our $browser = WWW::Mechanize::Timed->new(
-      agent             => $ua,
       protocols_allowed => ['http', 'https'],
       ssl_opts          => { verify_hostname => 1 }
                                            );
