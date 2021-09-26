@@ -1,0 +1,19 @@
+<div id="page">
+    <div id="content">
+        <div id="header">
+          <h1>CWIC Source Monitor</h1>
+          <h2>Monitoring response from CWIC partners</h2>
+        </div><!-- #header -->
+
+        <h2>Contact Us</h2>
+        <div id="content">
+            <ul>
+                <li>Developer: <a href="mailto:warnock@awcubed.com">Archie Warnock</a></li>
+                <li>CWIC Team: <a href="mailto:min.m.wong@nasa.gov">Minnie Wong</a></li>
+                <li>WGISS Contact: <a href="diane.k.davies@nasa.gov">Diane Davies</a></li>
+                <li>CMR Lead: Doug Newman</li>
+            </ul>
+        </div>
+
+    </div><!-- #content -->
+</div><!-- #page -->

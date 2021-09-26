@@ -1,0 +1,2 @@
+plackup -R lib,public,views bin/app.psgi
+

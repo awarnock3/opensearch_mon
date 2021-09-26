@@ -1,0 +1,88 @@
+<div id="page">
+    <div id="content">
+        <div id="header">
+          <h1>CWIC Source Monitor</h1>
+          <h2>Monitoring response from CWIC partners</h2>
+        </div><!-- #header -->
+
+        <div>Message of the day: <% motd %></div>
+
+        <h2>Monitoring Statistics</h2>
+
+        <div id='div-table' class="cwic-table" style="width: 75%;">
+            <table id='table-links' class="compact hover row-border">
+                <thead id="thead-links">
+                    <th>Source</th>
+                    <th>Request Type</th>
+                    <th>Min Request Time (sec)</th>
+                    <th>Max Request Time (sec)</th>
+                    <th>Avg Request Time (sec)</th>
+                    <th>Errors (past week)</th>
+                    <th>Errors (past 2 weeks)</th>
+                    <th>Errors (past month)</th>
+                    <th>Total Errors</th>
+                    <th>Total Requests</th>
+                </thead>
+                <tbody id="tbody-links" style="display:none;">
+                    <% FOREACH source_key IN statistics.keys.sort %>
+                    <%  row_hash = statistics.$source_key %>
+                    <%  FOREACH request IN row_hash.keys.sort %>
+                    <tr>
+                        <td>
+                            <a href="<% request.uri_base %>/cwicmon/results/<% source_key %>" title="Source results for <% source_key %>">
+                                <% row_hash.$request.label %>
+                            </a>
+                        </td>
+                        <td>
+                            <% request %>
+                        </td>
+                        <td>
+                            <% row_hash.$request.min_et %>
+                        </td>
+                        <td>
+                            <% row_hash.$request.max_et %>
+                        </td>
+                        <td>
+                            <% row_hash.$request.avg_et %>
+                        </td>
+                        <td>
+                            <% row_hash.$request.errors_week %>
+                        </td>
+                        <td>
+                            <% row_hash.$request.errors_2weeks %>
+                        </td>
+                        <td>
+                            <% row_hash.$request.errors_month %>
+                        </td>
+                        <td>
+                            <% row_hash.$request.errors %>
+                        </td>
+                        <td>
+                            <% row_hash.$request.total_requests %>
+                        </td>
+                    </tr>
+                    <%  END %>
+                    <% END %>
+                </tbody>
+            </table>
+        </div><!-- #div-table -->
+    </div><!-- #content -->
+</div><!-- #page -->
+
+<script type="text/javascript">
+ "use strict;"
+ $(document).ready(function() {
+
+     $( "#table-links" ).DataTable( {
+         scrollY:        '75vh',
+         scrollCollapse: true,
+         paging:         false,
+         columnDefs: [
+             { targets: 0, width: "160px", },
+             { targets: [2,3,4,5,6,7,8,9], className: 'dt-body-right', },
+         ],
+     } );
+     $( "#tbody-links" ).show();
+     $( "#table-links" ).DataTable().columns.adjust();
+ } );
+</script>

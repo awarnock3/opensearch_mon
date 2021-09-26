@@ -1,0 +1,166 @@
+<div id="page">
+    <div id="content">
+        <div id="header">
+            <h1>CWIC Source Monitor</h1>
+            <h2>Monitoring response from CWIC partners</h2>
+        </div><!-- #header -->
+
+        <h2>Test Results</h2>
+
+        <div id="daterange">
+            <div style="width: 100%;">
+                <form action="<% request.uri_base %>/results" method="POST"
+                      id="daterange-form" data-parsley-validate>
+                    <span style="font-weight: bold;">Show results for </span>
+                    <select id="select-daterange" name="Days"
+                            class="chosen ui-widget ui-state-default ui-corner-all ui-selectmenu-dropdown"
+                            data-parsley-required
+                            onChange="submit();">
+                        <option value="7">the last week</option>
+                        <option value="14">the last 2 weeks</option>
+                        <option value="30">the last month</option>
+                        <option value="">all</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <div>&nbsp;</div>
+
+        <div id="filters">
+            <div id="source-row">
+                <fieldset>
+                    <legend style="font-size:small;padding:1px;">Sources</legend>
+                    <button id="source-all" class="ui-button ui-widget ui-corner-all">Show all</button>
+                    <button id="source-ccmeo" class="ui-button ui-widget ui-corner-all">CCMEO</button>
+                    <button id="source-mosdac" class="ui-button ui-widget ui-corner-all">ISRO/MOSDAC</button>
+                    <button id="source-nrsc" class="ui-button ui-widget ui-corner-all">ISRO/NRSC</button>
+                    <button id="source-cmr" class="ui-button ui-widget ui-corner-all">NASA/CMR</button>
+                    <button id="source-ghrsst" class="ui-button ui-widget ui-corner-all">NOAA/GHRSST</button>
+                    <button id="source-nrscc" class="ui-button ui-widget ui-corner-all">China/NRSCC</button>
+                    <button id="source-usgs" class="ui-button ui-widget ui-corner-all">USGS/LSI</button>
+                </fieldset>
+            </div>
+
+            <div id="request-row">
+                <fieldset>
+                    <legend style="font-size:small;padding:1px;">Requests</legend>
+                    <button id="request-all" class="ui-button ui-widget ui-corner-all">Show all</button>
+                    <button id="request-granules" class="ui-button ui-widget ui-corner-all">Show granule requests</button>
+                    <button id="request-osdd" class="ui-button ui-widget ui-corner-all">Show OSDD requests</button>
+                </fieldset>
+
+                <fieldset>
+                    <legend style="font-size:small;padding:1px;">Responses</legend>
+                    <button id="http-all" class="ui-button ui-widget ui-corner-all">Show all</button>
+                    <button id="http-ok" class="ui-button ui-widget ui-corner-all">HTTP success</button>
+                    <button id="http-fail" class="ui-button ui-widget ui-corner-all">HTTP error</button>
+                </fieldset>
+            </div>
+        </div>
+        
+        <div>&nbsp;</div>
+
+        <div id='div-table' class="cwic-table">
+            <table id='table-results' class="wrap stripe">
+                <thead id="thead-results">
+                    <th>Source</th>
+                    <th>Request Type</th>
+                    <th>HTTP Response</th>
+                    <th>Response parsed</th>
+                    <th>Parse error</th>
+                    <th>Total time (secs)</th>
+                    <th>Timestamp</th>
+                    <th>Tested URL</th>
+                </thead>
+                <tbody id="tbody-results" style="display:none;">
+                    <% FOREACH result IN results %>
+                    <tr>
+                        <td><% result.label %></td>
+                        <td><% result.request_type %></td>
+                        <td><% result.http_message %></td>
+                        <td><% result.parsed %></td>
+                        <td><% result.error %></td>
+                        <td><% result.elapsed_time %></td>
+                        <td><% result.timestamp %></td>
+                        <td style="word-break: break-all;"><a href="<% result.url %>"><% result.url %></a></td>
+                    </tr>
+                    <% END %>
+                </tbody>
+            </table>
+        </div><!-- #div-table -->
+
+    </div><!-- #content -->
+</div><!-- #page -->
+
+<script type="text/javascript">
+ "use strict;"
+ $(document).ready(function() {
+     var table = $( "#table-results" ).DataTable( {
+         scrollY:        '60vh',
+         scrollCollapse: true,
+         paging:         true,
+         pageLength:     50,
+         lengthMenu:     [[25, 50, 100, -1], [25, 50, 100, "All"]],
+         autoWidth:      false,
+         deferRender:    true,
+         order:          [[ 6, "desc" ]],
+         columnDefs:     [
+             { targets: 0, width: "80px", },
+             { targets: 6, width: "136px", },
+         ],
+     } );
+     $( "#tbody-results" ).show();
+     $( "#table-results" ).DataTable().columns.adjust();
+
+     $('#source-all').click(function () {
+         table.column(0).search("").draw();
+     });
+     $('#source-ccmeo').click(function () {
+         table.column(0).search("CCMEO").draw();
+     });
+     $('#source-eumetsat').click(function () {
+         table.column(0).search("EUMETSAT").draw();
+     });
+     $('#source-mosdac').click(function () {
+         table.column(0).search("ISRO/MOSDAC").draw();
+     });
+     $('#source-nrsc').click(function () {
+         table.column(0).search("ISRO/NRSC").draw();
+     });
+     $('#source-cmr').click(function () {
+         table.column(0).search("NASA/CMR").draw();
+     });
+     $('#source-ghrsst').click(function () {
+         table.column(0).search("NOAA-NCEI").draw();
+     });
+     $('#source-nrscc').click(function () {
+         table.column(0).search("NRSCC").draw();
+     });
+     $('#source-usgs').click(function () {
+         table.column(0).search("USGS").draw();
+     });
+
+     $('#request-all').click(function () {
+         table.column(1).search("").draw();
+     });
+     $('#request-granules').click(function () {
+         table.column(1).search("granule").draw();
+     });
+     $('#request-osdd').click(function () {
+         table.column(1).search("osdd").draw();
+     });
+
+     $('#http-all').click(function () {
+         table.column(2).search("").draw();
+     });
+     $('#http-ok').click(function () {
+         table.column(2).search("200 ok").draw();
+     });
+     var not_ok = '^[^200.*]';
+     $('#http-fail').click(function () {
+         table.column(2).search(not_ok, true, false).draw();
+     });
+
+ } );
+</script>

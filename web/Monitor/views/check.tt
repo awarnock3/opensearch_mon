@@ -1,0 +1,55 @@
+<div id="page">
+    <div id="content">
+        <div id="header">
+            <h1>CWIC Source Check</h1>
+            <h2>Check the response from CWIC partners</h2>
+        </div><!-- #header -->
+
+        <% IF sources %>
+        <div id="source-list">
+            <h2>Select a source to check</h2>
+            <div style="width: 100%;">
+                <form action="<% request.uri_base %>/check" method="POST"
+                      id="source-form" data-parsley-validate>
+                    <select id="select-source" name="Source"
+                            class="chosen ui-widget ui-state-default ui-corner-all ui-selectmenu-dropdown"
+                            data-placeholder="Select a source"
+                            data-parsley-required
+                            onChange="submit();">
+                        <option value=""></option>
+                        <% FOREACH entry IN sources.keys.sort %>
+                        <option value="<% sources.$entry.source %>">
+                            <% sources.$entry.label %>
+                        </option>
+                        <% END %>
+                    </select>
+                </form>
+            </div>
+        </div>
+        <% END %>
+
+        <% IF check %>
+        <div id="source-results">
+            <h2>Source response</h2>
+            <div>
+                <pre><% check.response %></pre>
+            </div>
+        </div>
+        <% END %>
+
+    </div><!-- #content -->
+</div><!-- #page -->
+
+<link rel="stylesheet" href="<% request.uri_base %>/javascripts/chosen/chosen.min.css">
+<script type="text/javascript" src="<% request.uri_base %>/javascripts/chosen/chosen.jquery.min.js"></script>
+<script type="text/javascript" src="<% request.uri_base %>/javascripts/parsley.min.js"></script>
+
+<script type="text/javascript">
+ "use strict;"
+ $( "#select-source" ).chosen({width: '16em'});
+ $( "#source-form" ).parsley();
+
+ $(document).ready(function() {
+     $( "#select-source" ).chosen().trigger( 'chosen:updated' );
+ });
+</script>

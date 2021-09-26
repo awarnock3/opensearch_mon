@@ -1,0 +1,56 @@
+
+<div id="page">
+
+      <div id="content">
+        <div id="header">
+          <h1>CWIC Source Monitor</h1>
+          <h2>Monitoring response from CWIC partners</h2>
+        </div><!-- #header -->
+
+          <h2>Sources</h2>
+
+          <div id='div-table' class="cwic-table" style="width: 35%;">
+            <table id='table-source'>
+              <thead id="thead-source">
+                  <th>Source</th>
+                  <th>OpenSearch Status</th>
+                  <th>Web Server</th>
+              </thead>
+              <tbody id="tbody-source" style="display:none;">
+                <% FOREACH entry IN sources.keys.sort %>
+                  <tr>
+                    <td>
+                      <% sources.$entry.label %>
+                    </td>
+                    <td>
+                        <% sources.$entry.status %>
+                    </td>
+                    <td>
+                        <% sources.$entry.ping %>
+                    </td>
+                  </tr>
+                <% END %>
+              </tbody>
+            </table>
+          </div><!-- #div-table -->
+      </div>
+
+</div>
+
+<script type="text/javascript">
+ "use strict;"
+ $(document).ready(function() {
+     $( "#table-source" ).DataTable({
+         scrollY:        '75vh',
+         scrollCollapse: true,
+         paging:         false,
+         searching:      false,
+         columnDefs: [
+             { targets: 0, width: "75%", },
+             { targets: 1, width: "25%", },
+         ],
+     });
+     $( "#tbody-source" ).show();
+     $( "#table-source" ).DataTable().columns.adjust();
+ } );
+</script>
