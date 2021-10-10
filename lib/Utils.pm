@@ -63,6 +63,7 @@ Emails an alert to someone
     my $profile = shift;
 
     my $sender     = $config->{mail}->{sender};
+    my $email_host = $config->{mail}->{server};
     my $user       = $config->{mail}->{login};
     my $password   = $config->{mail}->{password};
     my $recipients = $config->{mail}->{recipients};
@@ -71,7 +72,7 @@ Emails an alert to someone
     #print "Sending to $receivers";
     my $transport = Email::Sender::Transport::SMTP->new(
                    {
-                     host          => 'mail.runbox.com',
+                     host          => $email_host,
                      ssl           => 1,
                      sasl_username => $user,
                      sasl_password => $password
