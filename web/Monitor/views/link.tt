@@ -1,0 +1,69 @@
+<div id="page">
+    <div id="content">
+        <div id="header">
+          <h1>CWIC Source Monitor</h1>
+          <h2>Monitoring response from CWIC partners</h2>
+        </div><!-- #header -->
+
+        <h2>Default Testing Links</h2>
+          
+        <div id='div-table' class="cwic-table">
+            <table id='table-links'>
+                <thead id="thead-links">
+                    <th>Source</th>
+                    <th>OSDD Request</th>
+                    <th>Granule Request</th>
+                </thead>
+                <tbody id="tbody-links" style="display:none;">
+                    <% FOREACH entry IN links.keys.sort %>
+                    <tr>
+                        <td>
+                            <% links.$entry.label %>
+                        </td>
+                        <% IF links.$entry.osdd %>
+                        <td style="word-break: break-all;">
+                            <% links.$entry.osdd %>
+                        </td>
+                        <% ELSE %>
+                        <td>
+                            <span class="ui-icon ui-icon-alert"></span>
+                            <span>No link</span>
+                        </td>
+                        <% END %>
+                        <% IF links.$entry.granule %>
+                        <td style="word-break: break-all;"> 
+                            <% links.$entry.granule %>
+                        </td>
+                        <% ELSE %>
+                        <td>
+                            <span class="ui-icon ui-icon-alert"></span>
+                            <span>No link</span>
+                        </td>
+                        <% END %>
+                    </tr>
+                    <% END %>
+                </tbody>
+            </table>
+        </div><!-- #div-table -->
+
+    </div><!-- #content -->
+</div><!-- #page -->
+
+<script type="text/javascript">
+ "use strict;"
+ $(document).ready(function() {
+     $( "#table-links" ).DataTable({
+         scrollY:        '75vh',
+         scrollCollapse: true,
+         paging:         false,
+         order: [[ 0, "asc" ]],
+         columnDefs: [
+             { targets: 0, width: "20%", },
+             { targets: 1, width: "40%", },
+             { targets: 2, width: "40%", },
+         ],
+     });
+     $( "#tbody-links" ).show();
+     $( "#table-links" ).DataTable().columns.adjust();
+ } );
+</script>

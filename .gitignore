@@ -1,2 +1,12 @@
 *~
 .DS_Store
+web/Monitor/bin
+web/Monitor/config.yml
+web/Monitor/cpanfile
+web/Monitor/environments
+web/Monitor/Makefile.PL
+web/Monitor/MANIFEST
+web/Monitor/MANIFEST.SKIP
+web/Monitor/public/
+web/Monitor/t/
+web/Monitor/TODO

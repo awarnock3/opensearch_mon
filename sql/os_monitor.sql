@@ -45,6 +45,7 @@ CREATE TABLE config (
 DROP TABLE IF EXISTS links;
 CREATE TABLE links (
   linkid int(11) NOT NULL,
+  base_url varchar(128) NOT NULL,
   osdd text DEFAULT NULL,
   granule text DEFAULT NULL,
   fk_source varchar(10) NOT NULL
@@ -83,7 +84,7 @@ CREATE TABLE `source` (
   source varchar(10) NOT NULL,
   label varchar(64) NOT NULL,
   status enum('ACTIVE','INACTIVE','UNKNOWN','') NOT NULL DEFAULT 'ACTIVE',
-  ping enum('up','down') NOT NULL
+  ping enum('up','down')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
