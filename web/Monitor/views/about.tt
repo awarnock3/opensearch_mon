@@ -1,39 +1,40 @@
 <div id="page">
     <div id="content">
         <div id="header">
-          <h1>CWIC Source Monitor</h1>
-          <h2>Monitoring response from CWIC partners</h2>
+          <h1>OpenSearch Source Monitor</h1>
+          <h2>Monitoring response from OpenSearch partners</h2>
         </div><!-- #header -->
 
         <h2>About the Monitoring Project</h2>
         <div id="content">
-            <p>This system is built to monitor the transition of the
-            CWIC project from operational mode into part of the NASA
-            CMR task. The former CWIC partner sites are tested here on
-            a regular basis to help with early diagnosis of potential
-            problems.  </p>
+            <p>This system was originally built to monitor the
+            transition of the CWIC project from operational mode into
+            part of the NASA CMR task. The former CWIC partner sites
+            are tested here on a regular basis to help with early
+            diagnosis of potential problems.  This app can be used as
+            a general purpose monitoring tool for compliant OpenSearch
+            sources.</p>
 
             <p>The Monitoring project consists of three components - a
             monitoring database, a command-line perl program
-            (cmr_monitor.pl) which populates the database by testing
-            various OpenSearch URLs for CWIC data partners, and a web
+            (os_monitor.pl) which populates the database by testing
+            various OpenSearch URLs for data partners, and a web
             application (Monitor) using the perl-based Dancer2
             framework to present the results of the URL testing and
             some related statistics.</p>
 
-            <p>The source code for both cmr_monitor.pl and the Monitor
-            Web App are open source and freely available upon
-            request.</p>
+            <p>The source code for both os_monitor.pl and the Monitor
+            Web App are open source and freely available at
+            GitHub.com.</p>
 
-            <h2>About cmr_monitor.pl</h2>
+            <h2>About os_monitor.pl</h2>
             
-            <p><tt>./cmr_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX|--osdd_only|--granule_only]</tt></p>
+            <p><tt>./os_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX|--osdd_only|--granule_only]</tt></p>
 
-            <p>Monitor CMR and remote CWIC hosts for
-            responses. Usually run out of cron. There is a single
-            entry available (see --source). If neither --source nor
-            --batch are specified, presents a menu for selecting a
-            single source.</p>
+            <p>Monitor OpenSearch hosts for responses. Usually run out
+            of cron. There is a single entry available (see
+            --source). If neither --source nor --batch are specified,
+            presents a menu for selecting a single source.</p>
             
             <pre>
             --help
@@ -46,7 +47,7 @@
             Print extra output, notably retrieved XML
 
             --batch
-            Run in batch mode - test each active provider in cmr.ini
+            Run in batch mode - test each active provider in os_monitor.ini
 
             --save
             Save results to the database
@@ -55,7 +56,7 @@
             Send an email alert if any errors occur
 
             --source=XXX
-            Test just one source specified in cmr.ini
+            Test just one source specified in os_monitor.ini
 
             --osdd_only
             Just test the OSDD link (skip the granules)
@@ -69,15 +70,18 @@
             The Monitor Web App provides 5 tabs:
             <dl>
                 <dt>Home/Statistics</dt>
-                <dd>Current summary statistics on testing results for the CWIC data partners</dd>
+                <dd>Current summary statistics on testing results for
+                the OpenSearch data partners</dd>
                 <dt>Results</dt>
-                <dd>The full log of the testing results table from the Monitor database</dd>
+                <dd>The full log of the testing results table from the
+                Monitor database</dd>
                 <dt>Sources</dt>
                 <dd>Contents of the monitoring table of sources</dd>
                 <dt>Links</dt>
-                <dd>Stored OpenSearch links for the CWIC data partners</dd>
+                <dd>Stored OpenSearch links for the data partners</dd>
                 <dt>About</dt>
-                <dd>General information about the CWIC project and the Monitoring application</dd>
+                <dd>General information about the CWIC project and the
+                Monitoring application</dd>
                 <dt>Contact Us</dt>
                 <dd>Contact information for the CWIC team</dd>
             </dl>

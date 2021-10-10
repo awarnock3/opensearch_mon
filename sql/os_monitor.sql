@@ -19,10 +19,10 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: cmr_monitor
+-- Database: os_monitor
 --
-CREATE DATABASE IF NOT EXISTS cmr_monitor DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-USE cmr_monitor;
+CREATE DATABASE IF NOT EXISTS os_monitor DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE os_monitor;
 
 -- --------------------------------------------------------
 

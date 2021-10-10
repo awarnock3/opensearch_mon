@@ -1,5 +1,6 @@
 *~
 .DS_Store
+os_monitor_cwic.ini
 web/Monitor/bin
 web/Monitor/config.yml
 web/Monitor/cpanfile

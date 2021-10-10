@@ -16,7 +16,7 @@ sub motd {
 
 sub script_path {
   my $dbh = shift;
-  my $param = q{cmr_monitor};
+  my $param = q{os_monitor};
   my $script_path = $dbh->selectrow_arrayref(
      q{SELECT value FROM config WHERE param = ?}, {}, $param);
   return $script_path->[0];

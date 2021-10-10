@@ -22,15 +22,17 @@ use OSUtils;
 
 =encoding UTF-8
 
-=head1 NAME cmr_monitor.pl - CMR Monitoring script
+=head1 NAME os_monitor.pl - OpenSearch source Monitoring script
 
 =head1 SYNOPSIS
 
-./cmr_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX|--osdd_only|--granule_only]
+./os_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX|--osdd_only|--granule_only]
 
 =over 4
 
-Monitor CMR and remote CWIC hosts for responses. Usually run out of cron. There is a single entry available (see --source). If neither --source nor --batch are specified, presents a menu for selecting a single source.
+Monitor OpenSearch hosts for responses. Usually run out of cron. There
+is a single entry available (see --source). If neither --source nor
+--batch are specified, presents a menu for selecting a single source.
 
 =over 4
 
@@ -62,7 +64,7 @@ Print extra output, notably retrieved XML
 
 =over 2
 
-Run in batch mode - test each active provider in cmr.ini
+Run in batch mode - test each active provider in os_monitor.ini
 
 =back
 
@@ -86,7 +88,7 @@ Send an email alert if any errors occur
 
 =over 2
 
-Test just one source specified in cmr.ini
+Test just one source specified in os_monitor.ini
 
 =back
 
@@ -161,7 +163,7 @@ Present the interative menu of sources
 
 sub menu {
   my $menu = Menu->new( );
-  $menu->title( q{Test CWIC Source} );
+  $menu->title( q{Test Source} );
 
   my $sources = DBUtils::get_active_sources();
   foreach my $source (sort keys %$sources) {
@@ -272,7 +274,7 @@ sub batch {
         if (defined $get_status->{error} and $mail_alert) {
           my $source  = $get_status->{source};
           my $type    = $get_status->{request_type};
-          my $subject = qq{CWIC Monitor Alert};
+          my $subject = qq{OpenSearch Monitor Alert};
           $subject   .= qq{: $source $type};
           my $msg     = qq{Error retrieving $type:\n};
           $msg       .= Dumper( $get_status );
@@ -297,7 +299,7 @@ sub batch {
         if (defined $get_status->{error} and $mail_alert) {
           my $source  = $get_status->{source};
           my $type    = $get_status->{request_type};
-          my $subject = qq{CWIC Monitor Alert};
+          my $subject = qq{OpenSearch Monitor Alert};
           $subject   .= qq{: $source $type};
           my $msg     = qq{Error retrieving $type:\n};
           $msg       .= Dumper( $get_status );
@@ -398,25 +400,25 @@ sub get_single {
   return 0;
 }
 
-# ABSTRACT: Monitor/test CWIC OpenSearch sources
+# ABSTRACT: Monitor/test OpenSearch sources
 __END__
 
 =head1 DESCRIPTION
 
-./cmr_monitor.pl
+./os_monitor.pl
 
 =over 4
 
-Test all sources in cmr.ini
+Test all sources in os_monitor.ini
 
 =back
 
-./cmr_monitor.pl --source=ccmeo
+./os_monitor.pl --source=ccmeo
 
 =over 4
 
 
-Test one source in cmr.ini
+Test one source in os_monitor.ini
 
 =back
 

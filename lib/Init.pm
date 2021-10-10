@@ -23,7 +23,7 @@ package Init {
             $save $ping_only $osdd_only $granule_only $mail_alert};
 
   my $dirname = $FindBin::Bin;
-  my $inifile = qq{$dirname/cmr.ini};
+  my $inifile = qq{$dirname/os_monitor.ini};
   our $config  = Config::Tiny->read( $inifile, 'utf8' );
 
   our $verbose      = 0;
