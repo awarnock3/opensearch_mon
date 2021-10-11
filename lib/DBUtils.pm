@@ -14,7 +14,8 @@ package DBUtils {
   use Exporter;
   use DBI;
   use Config::Tiny;
-  use Init qw{$config};
+  use Init qw{$config $inifile};
+  use Data::Dumper::Concise;
 
   our (@EXPORT, @ISA);     # Global variables
 
@@ -22,6 +23,8 @@ package DBUtils {
   @EXPORT = qw{$dbh};
 
   # Database config
+  say "Config in $inifile";
+  say "Config:\n" . Dumper($config);
   my $dbname = $config->{database}->{dbname};
   my $dbuser = $config->{database}->{dbuser};
   my $dbpass = $config->{database}->{dbpass};

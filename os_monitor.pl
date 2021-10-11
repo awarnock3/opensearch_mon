@@ -7,7 +7,7 @@ use POSIX qw(strftime);
 use 5.010;
 
 use Data::Dumper::Concise;
-use Getopt::Long;
+#use Getopt::Long;
 use FindBin;
 use lib File::Spec->catdir($FindBin::Bin, '.', 'lib');
 use Pod::Usage;
@@ -49,6 +49,14 @@ Show this help
 =over 2
 
 Show the man page
+
+=back
+
+--ini=XXX
+
+=over 2
+
+Read configuration parameters from ini file XXX
 
 =back
 
@@ -124,25 +132,6 @@ Just test the granule request link (skip the OSDD)
 
 =cut
 
-GetOptions(
-           'help|h|?'  => \$help,
-           man         => \$man,
-           'verbose|v' => \$verbose,
-           'source=s'  => \$source,
-           batch       => \$batch,
-           save        => \$save,
-           mail        => \$mail_alert,
-           ping        => \$ping_only,
-           osdd        => \$osdd_only,
-           granule     => \$granule_only,
-           'ini|i'     => \$ini,
-          ) or pod2usage(2);
-pod2usage(1) if $help;
-pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
-
-# Save the config file name, if specified
-$inifile = $ini if $ini;
-
 my $links = DBUtils::get_links_all();
 unless ($links and keys %$links > 0) {
   say "No valid sources";
@@ -162,7 +151,6 @@ unless ($links and keys %$links > 0) {
     menu();
   }
 }
-# $dbh->disconnect;
 
 =head2 menu()
 
