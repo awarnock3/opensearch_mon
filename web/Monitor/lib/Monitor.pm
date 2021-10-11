@@ -12,7 +12,11 @@ use Monitor::Utils;
 our $VERSION = '0.2';
 
 sub connect_db {
+<<<<<<< HEAD
     my $dbname = q{os_monitor};
+=======
+    my $dbname = q{cmr_monitor};
+>>>>>>> fd0533db13c27b9ec41a68869c0a954eaa945d76
     my $dbuser = q{cwic_user};
     my $dbpass = q{Quasar06$cwic};
     my $dsn    = qq{dbi:mysql:$dbname};
@@ -217,11 +221,19 @@ post '/check' => sub {
   my %check;
 
   my $source = body_parameters->get('Source');
+<<<<<<< HEAD
   my $osmon_path = Monitor::Utils::script_path($dbh);
   # DEBUG $osmon_path;
   my $response;
   eval {
     $response = `$osmon_path --source=$source`;
+=======
+  my $cmr_path = Monitor::Utils::script_path($dbh);
+  # DEBUG $cmr_path;
+  my $response;
+  eval {
+    $response = `$cmr_path --source=$source`;
+>>>>>>> fd0533db13c27b9ec41a68869c0a954eaa945d76
   };
   if ($@) {
     DEBUG "Got error";
