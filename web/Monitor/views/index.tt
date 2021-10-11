@@ -1,13 +1,8 @@
 <div id="page">
     <div id="content">
         <div id="header">
-<<<<<<< HEAD
           <h1>OpenSearch Source Monitor</h1>
           <h2>Monitoring response from OpenSearch partners</h2>
-=======
-          <h1>CWIC Source Monitor</h1>
-          <h2>Monitoring response from CWIC partners</h2>
->>>>>>> fd0533db13c27b9ec41a68869c0a954eaa945d76
         </div><!-- #header -->
 
         <div>Message of the day: <% motd %></div>

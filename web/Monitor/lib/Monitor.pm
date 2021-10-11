@@ -12,12 +12,16 @@ use Monitor::Utils;
 our $VERSION = '0.2';
 
 sub connect_db {
-    my $dbname = q{os_monitor};
-    my $dbuser = q{cwic_user};
-    my $dbpass = q{Quasar06$cwic};
-    my $dsn    = qq{dbi:mysql:$dbname};
+#    my $dbname = q{os_monitor};
+#    my $dbuser = q{cwic_user};
+#    my $dbpass = q{Quasar06$cwic};
+#    my $dbname = database->{database};
+#    my $dbuser = database->{user};
+#    my $dbpass = database->{password};
+#    my $dsn    = qq{dbi:mysql:$dbname};
 
-    my $dbh = DBI->connect($dsn,$dbuser,$dbpass)
+#    my $dbh = DBI->connect($dsn,$dbuser,$dbpass)
+    my $dbh = database
         or die "Couldn't connect to database: " . DBI->errstr;
 
     return $dbh;
@@ -217,19 +221,11 @@ post '/check' => sub {
   my %check;
 
   my $source = body_parameters->get('Source');
-<<<<<<< HEAD
   my $osmon_path = Monitor::Utils::script_path($dbh);
   # DEBUG $osmon_path;
   my $response;
   eval {
     $response = `$osmon_path --source=$source`;
-=======
-  my $cmr_path = Monitor::Utils::script_path($dbh);
-  # DEBUG $cmr_path;
-  my $response;
-  eval {
-    $response = `$cmr_path --source=$source`;
->>>>>>> fd0533db13c27b9ec41a68869c0a954eaa945d76
   };
   if ($@) {
     DEBUG "Got error";

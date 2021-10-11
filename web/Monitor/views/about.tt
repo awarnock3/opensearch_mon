@@ -43,11 +43,14 @@
             --man
             Show the man page
 
+            --ini=XXXX
+            Load the configuration data from the file XXX
+
             --verbose
             Print extra output, notably retrieved XML
 
             --batch
-            Run in batch mode - test each active provider in os_monitor.ini
+            Run in batch mode - test each active provider in the config file
 
             --save
             Save results to the database

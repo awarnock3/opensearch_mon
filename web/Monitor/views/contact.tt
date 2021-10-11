@@ -1,13 +1,8 @@
 <div id="page">
     <div id="content">
         <div id="header">
-<<<<<<< HEAD
           <h1>OpenSearch Source Monitor</h1>
           <h2>Monitoring response from OpenSearch partners</h2>
-=======
-          <h1>CWIC Source Monitor</h1>
-          <h2>Monitoring response from CWIC partners</h2>
->>>>>>> fd0533db13c27b9ec41a68869c0a954eaa945d76
         </div><!-- #header -->
 
         <h2>Contact Us</h2>
@@ -16,11 +11,7 @@
                 <li>Developer: <a href="mailto:warnock@awcubed.com">Archie Warnock</a></li>
                 <li>CWIC Team: <a href="mailto:min.m.wong@nasa.gov">Minnie Wong</a></li>
                 <li>WGISS Contact: <a href="diane.k.davies@nasa.gov">Diane Davies</a></li>
-<<<<<<< HEAD
                 <li>NASA/CMR Lead: Doug Newman</li>
-=======
-                <li>CMR Lead: Doug Newman</li>
->>>>>>> fd0533db13c27b9ec41a68869c0a954eaa945d76
             </ul>
         </div>
 
