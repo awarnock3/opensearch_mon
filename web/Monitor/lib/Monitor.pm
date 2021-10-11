@@ -12,11 +12,7 @@ use Monitor::Utils;
 our $VERSION = '0.2';
 
 sub connect_db {
-<<<<<<< HEAD
     my $dbname = q{os_monitor};
-=======
-    my $dbname = q{cmr_monitor};
->>>>>>> fd0533db13c27b9ec41a68869c0a954eaa945d76
     my $dbuser = q{cwic_user};
     my $dbpass = q{Quasar06$cwic};
     my $dsn    = qq{dbi:mysql:$dbname};

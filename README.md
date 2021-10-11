@@ -125,15 +125,60 @@ This is an example of how to list things you need to use the software and how to
 
 ### Create the database
 
-### Configure the ini files
+$ mysql --user <username> -p
+Enter password: 
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 224
+Server version: 10.3.28-MariaDB MariaDB Server
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]> create database <dbname>;
+Query OK, 1 row affected (0.103 sec)
+MariaDB [(none)]> quit
+Bye
+
+$ mysql --user <dbuser> -p <dbname> < sql/os_monitor.sql 
+Enter password: 
+$
+
+### Populate the database tables
+
+Load the Source table first because there are foreign key constraints to it from other tables.
+
+$ mysql --user <dbuser> -p <dbname> < sql/source.sql 
+Enter password: 
+$ mysql --user <dbuser> -p <dbname> < sql/links.sql 
+Enter password: 
+$ mysql --user <dbuser> -p <dbname> < sql/config.sql 
+Enter password: 
+$
+
+### Configure the ini file
+
+For the os_monitor script:
+
+$ vi os_monitor.ini
+[database]
+dbname = <dbname>
+dbuser = <dbuser>
+dbpass = <dbpassword>
+
+[mail]
+server = <smtphost>
+sender = <senderemail>
+login = <smtpuser>
+password = <smtppass>
+recipients = <emails>
+
 
 ### Install Dancer2
 
 ### Configure the Web Server
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
-
 
 <!-- USAGE EXAMPLES -->
 ## Usage
