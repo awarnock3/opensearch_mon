@@ -86,7 +86,7 @@ Return 1 if the source is active
                      FROM source
                     WHERE source = ?};
     my $active = $dbh->selectrow_arrayref($sql, {}, $source);
-    return ($active->[0] eq 'ACTIVE') ? 1 : 0;
+    return ($active and $active->[0] eq 'ACTIVE') ? 1 : 0;
 }
 
 =head2 get_base
@@ -101,7 +101,8 @@ Return hostname if the source is active
                      FROM links
                     WHERE fk_source = ?};
     my $host   = $dbh->selectrow_arrayref($sql, {}, $source);
-    return $host->[0];
+    return $host->[0] if $host;
+    return undef;
   }
 
 =head2 get_active_sources()
