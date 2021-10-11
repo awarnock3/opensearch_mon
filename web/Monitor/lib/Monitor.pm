@@ -9,18 +9,9 @@ Log::Log4perl->easy_init($DEBUG);
 
 use Monitor::Utils;
 
-our $VERSION = '0.2';
+our $VERSION = '1.0.0';
 
 sub connect_db {
-#    my $dbname = q{os_monitor};
-#    my $dbuser = q{cwic_user};
-#    my $dbpass = q{Quasar06$cwic};
-#    my $dbname = database->{database};
-#    my $dbuser = database->{user};
-#    my $dbpass = database->{password};
-#    my $dsn    = qq{dbi:mysql:$dbname};
-
-#    my $dbh = DBI->connect($dsn,$dbuser,$dbpass)
     my $dbh = database
         or die "Couldn't connect to database: " . DBI->errstr;
 
