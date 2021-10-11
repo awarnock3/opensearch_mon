@@ -21,8 +21,8 @@ SET time_zone = "+00:00";
 --
 -- Database: os_monitor
 --
-CREATE DATABASE IF NOT EXISTS os_monitor DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-USE os_monitor;
+-- CREATE DATABASE IF NOT EXISTS os_monitor DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+-- USE os_monitor;
 
 -- --------------------------------------------------------
 
