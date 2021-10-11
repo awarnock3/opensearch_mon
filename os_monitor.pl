@@ -124,7 +124,6 @@ Just test the granule request link (skip the OSDD)
 
 =cut
 
-# TODO - add option for ini file
 GetOptions(
            'help|h|?'  => \$help,
            man         => \$man,
@@ -136,12 +135,20 @@ GetOptions(
            ping        => \$ping_only,
            osdd        => \$osdd_only,
            granule     => \$granule_only,
+           'ini|i'     => \$ini,
           ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
+# Save the config file name, if specified
+$inifile = $ini if $ini;
+
 my $links = DBUtils::get_links_all();
-say "No valid sources" unless $links and keys %$links > 0;
+unless ($links and keys %$links > 0) {
+  say "No valid sources";
+  exit;
+}
+
 
  MAIN:
 {

@@ -20,10 +20,19 @@ package Init {
 
   @ISA = qw(Exporter);      # Take advantage of Exporter's capabilities
   @EXPORT = qw{$config $verbose $source $exit_status $help $man $batch
-            $save $ping_only $osdd_only $granule_only $mail_alert};
+            $save $ping_only $osdd_only $granule_only $mail_alert $inifile};
+
+  our $inifile; # May come from command line parameter set in main
 
   my $dirname = $FindBin::Bin;
-  my $inifile = qq{$dirname/os_monitor.ini};
+  if ($inifile) {
+    unless (-f $inifile) {
+      $inifile = qq{$dirname/$inifile};
+    }
+  }
+  else {
+    $inifile = qq{$dirname/os_monitor.ini};
+  }
   our $config  = Config::Tiny->read( $inifile, 'utf8' );
 
   our $verbose      = 0;
