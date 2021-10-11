@@ -124,6 +124,7 @@ Just test the granule request link (skip the OSDD)
 
 =cut
 
+# TODO - add option for ini file
 GetOptions(
            'help|h|?'  => \$help,
            man         => \$man,
@@ -140,8 +141,9 @@ pod2usage(1) if $help;
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
 my $links = DBUtils::get_links_all();
+say "No valid sources" unless $links and keys %$links > 0;
 
-MAIN:
+ MAIN:
 {
   if ($batch) {
     batch();
