@@ -1,4 +1,4 @@
-package DBUtils {
+1package DBUtils {
   #########################################################
   # These are general utility functions
   #########################################################
@@ -23,8 +23,6 @@ package DBUtils {
   @EXPORT = qw{$dbh};
 
   # Database config
-  say "Config in $inifile";
-  say "Config:\n" . Dumper($config);
   my $dbname = $config->{database}->{dbname};
   my $dbuser = $config->{database}->{dbuser};
   my $dbpass = $config->{database}->{dbpass};
