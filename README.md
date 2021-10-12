@@ -176,6 +176,27 @@ recipients = <emails>
 
 ### Install Dancer2
 
+Follow the directions in the Dancer2 documentation to install Dancer2
+into web/Monitor. Don't forget that you will have to configure the
+database connection in config.yml for the database plugin. For MySQL
+or MariaDB, it will look like this:
+<pre>
+    Database:
+        driver: 'mysql'
+        database: <dbname>
+        host: 'localhost'
+        port: 3306
+        username: <dbuser>
+        password: <dbpass>
+        connection_check_threshold: 10
+        dbi_params:
+            RaiseError: 1
+            AutoCommit: 1
+        on_connect_do: ["SET NAMES 'utf8'", "SET CHARACTER SET 'utf8'" ]
+        log_queries: 1
+
+</pre>
+
 ### Configure the Web Server
 
 <p align="right">(<a href="#top">back to top</a>)</p>
