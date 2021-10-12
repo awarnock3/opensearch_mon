@@ -26,22 +26,16 @@
         </div>
 
         <div>&nbsp;</div>
-
         <div id="filters">
+<!--
             <div id="source-row">
                 <fieldset>
                     <legend style="font-size:small;padding:1px;">Sources</legend>
                     <button id="source-all" class="ui-button ui-widget ui-corner-all">Show all</button>
-                    <button id="source-ccmeo" class="ui-button ui-widget ui-corner-all">CCMEO</button>
-                    <button id="source-mosdac" class="ui-button ui-widget ui-corner-all">ISRO/MOSDAC</button>
-                    <button id="source-nrsc" class="ui-button ui-widget ui-corner-all">ISRO/NRSC</button>
                     <button id="source-cmr" class="ui-button ui-widget ui-corner-all">NASA/CMR</button>
-                    <button id="source-ghrsst" class="ui-button ui-widget ui-corner-all">NOAA/GHRSST</button>
-                    <button id="source-nrscc" class="ui-button ui-widget ui-corner-all">China/NRSCC</button>
-                    <button id="source-usgs" class="ui-button ui-widget ui-corner-all">USGS/LSI</button>
                 </fieldset>
             </div>
-
+-->
             <div id="request-row">
                 <fieldset>
                     <legend style="font-size:small;padding:1px;">Requests</legend>
