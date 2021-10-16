@@ -79,7 +79,18 @@
 
 <!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->
 
-Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `awarnock3`, `opensearch-mon`, `twitter_handle`, `linkedin_username`, `email`, `email_client`, `project_title`, `project_description`
+This system is built to monitor the transition of the CWIC project
+from operational mode into part of the NASA CMR task. The former CWIC
+partner sites are tested here on a regular basis to help with early
+diagnosis of potential problems.
+
+The Monitoring project consists of three components - a monitoring
+database, a command-line perl program (cmr_monitor.pl) which populates
+the database by testing various OpenSearch URLs for CWIC data
+partners, and a web application (Monitor) using the perl-based Dancer2
+framework to present the results of the URL testing and some related
+statistics.
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -97,100 +108,109 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
 ### Prerequisites
 
-The command-line script requires a number of Perl modules. All should be easily available from MetaCPAN.org
+The command-line script requires a number of Perl modules. All should
+be easily available from MetaCPAN.org
 
--  Authen::SASL qw(Perl);
--  Carp;
--  Config::Tiny;
--  DBI;
--  Data::Dumper::Concise; # Only used for debugging
--  Email::Sender::Transport::SMTP;
--  Email::Stuffer;
--  Exporter;
--  FindBin;
--  Getopt::Long;
--  Init qw{$config $inifile};
--  LWP::Protocol::https;
--  LWP::UserAgent ();
--  LWP;
--  MIME::Types;
--  Net::SMTP 3.0;
--  Pod::Usage;
--  Term::ReadKey;
--  WWW::Mechanize::Timed;
--  XML::LibXML::PrettyPrint;
--  XML::LibXML;
+-  Authen::SASL
+-  Carp
+-  Config::Tiny
+-  DBI
+-  Data::Dumper::Concise # Only used for debugging
+-  Email::Sender::Transport::SMTP
+-  Email::Stuffer
+-  Exporter
+-  FindBin
+-  Getopt::Long
+-  LWP
+-  LWP::Protocol::https
+-  LWP::UserAgent
+-  MIME::Types
+-  Net::SMTP 3.0
+-  Pod::Usage
+-  Term::ReadKey
+-  WWW::Mechanize::Timed
+-  XML::LibXML
+-  XML::LibXML::PrettyPrint
 
 ### Installation
 
-Once you have cloned the repository into your desired location (I use /usr/local/src) and installed the necessary modules, the command-line script os_monitor.pl is ready to use. I run it out of cron every 12 hours as a sanity check.
+Once you have cloned the repository into your desired location (I use
+/usr/local/src) and installed the necessary modules, the command-line
+script os_monitor.pl is ready to use. I run it out of cron every 12
+hours as a sanity check.
 
-The repository also contains the Dancer2 modules to run the web interface. It is in ./web/Monitor. This is the place I suggest installing Dancer2. That will keep all of the code from this repository in one place, making updates easy.
+The repository also contains the Dancer2 modules to run the web
+interface. It is in ./web/Monitor. This is the place I suggest
+installing Dancer2. That will keep all of the code from this
+repository in one place, making updates easy.
 
 ### Create the database
 
-The first step is to create the database. There are 4 tables to create, 3 of which require populating with data of your choice. The file ./sql/os_monitor.sql will create the tables. The other 3 individual *.sql files will populate the database with sample data.
+The first step is to create the database. There are 4 tables to
+create, 3 of which require populating with data of your choice. The
+file ./sql/os_monitor.sql will create the tables. The other 3
+individual *.sql files will populate the database with sample data.
 
-- Table init
+- Table *init*
 
-- Table source
+- Table *source*
 
-- Table links
+- Table *links*
 
-- Table monitor
+- Table *monitor*
 
-$ mysql --user <username> -p
-Enter password: 
-Welcome to the MariaDB monitor.  Commands end with ; or \g.
-Your MariaDB connection id is 224
-Server version: 10.3.28-MariaDB MariaDB Server
 
-Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+        $ mysql --user <username> -p
+        Enter password: 
+        Welcome to the MariaDB monitor.  Commands end with ; or \g.
+        Your MariaDB connection id is 224
+        Server version: 10.3.28-MariaDB MariaDB Server
 
-Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+        Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
 
-MariaDB [(none)]> create database <dbname>;
-Query OK, 1 row affected (0.103 sec)
-MariaDB [(none)]> quit
-Bye
+        Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
 
-$ mysql --user <dbuser> -p <dbname> < sql/os_monitor.sql 
-Enter password: 
-$
+        MariaDB [(none)]> create database <dbname>;
+        Query OK, 1 row affected (0.103 sec)
+        MariaDB [(none)]> quit
+        Bye
+
+        $ mysql --user <dbuser> -p <dbname> < sql/os_monitor.sql 
+        Enter password: 
+        $
 
 ### Populate the database tables
 
-Load the Source table first because there are foreign key constraints to it from other tables.
+Load the *source* table first because there are foreign key constraints to it from other tables.
 
-$ mysql --user <dbuser> -p <dbname> < sql/source.sql 
-Enter password: 
-$ mysql --user <dbuser> -p <dbname> < sql/links.sql 
-Enter password: 
-$ mysql --user <dbuser> -p <dbname> < sql/config.sql 
-Enter password: 
-$
+
+        $ mysql --user <dbuser> -p <dbname> < sql/source.sql 
+        Enter password: 
+        $ mysql --user <dbuser> -p <dbname> < sql/links.sql 
+        Enter password: 
+        $ mysql --user <dbuser> -p <dbname> < sql/config.sql 
+        Enter password: 
+        $
 
 ### Configure the ini file
 
 For the os_monitor script:
 
-$ vi os_monitor.ini
-[database]
-dbname = <dbname>
-dbuser = <dbuser>
-dbpass = <dbpassword>
 
-[mail]
-server = <smtphost>
-sender = <senderemail>
-login = <smtpuser>
-password = <smtppass>
-recipients = <emails>
+        $ vi os_monitor.ini
+        [database]
+        dbname = <dbname>
+        dbuser = <dbuser>
+        dbpass = <dbpassword>
+
+        [mail]
+        server = <smtphost>
+        sender = <senderemail>
+        login = <smtpuser>
+        password = <smtppass>
+        recipients = <emails>
 
 
 ### Install Dancer2
@@ -199,7 +219,8 @@ Follow the directions in the Dancer2 documentation to install Dancer2
 into web/Monitor. Don't forget that you will have to configure the
 database connection in config.yml for the database plugin. For MySQL
 or MariaDB, it will look like this:
-<pre>
+
+
     Database:
         driver: 'mysql'
         database: <dbname>
@@ -214,13 +235,12 @@ or MariaDB, it will look like this:
         on_connect_do: ["SET NAMES 'utf8'", "SET CHARACTER SET 'utf8'" ]
         log_queries: 1
 
-</pre>
 
 ### Configure the Web Server
 
 I configure Apache to point to the osmon web app by defining a ScriptAlias in httpd.conf:
 
-<pre>
+
     ScriptAlias /osmon/ /usr/local/src/os_monitor/web/Monitor/public/dispatch.cgi/
     <Directory "/usr/local/src/os_monitor/web/Monitor/public">
        AllowOverride None
@@ -228,7 +248,7 @@ I configure Apache to point to the osmon web app by defining a ScriptAlias in ht
        Require all granted
        AddHandler cgi-script .cgi
     </Directory>
-</pre>
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -237,16 +257,27 @@ I configure Apache to point to the osmon web app by defining a ScriptAlias in ht
 
 ### os_monitor.pl
 
-This system is built to monitor the transition of the CWIC project from operational mode into part of the NASA CMR task. The former CWIC partner sites are tested here on a regular basis to help with early diagnosis of potential problems.
+This system is built to monitor the transition of the CWIC project
+from operational mode into part of the NASA CMR task. The former CWIC
+partner sites are tested here on a regular basis to help with early
+diagnosis of potential problems.
 
-The Monitoring project consists of three components - a monitoring database, a command-line perl program (cmr_monitor.pl) which populates the database by testing various OpenSearch URLs for CWIC data partners, and a web application (Monitor) using the perl-based Dancer2 framework to present the results of the URL testing and some related statistics.
+The Monitoring project consists of three components - a monitoring
+database, a command-line perl program (cmr_monitor.pl) which populates
+the database by testing various OpenSearch URLs for CWIC data
+partners, and a web application (Monitor) using the perl-based Dancer2
+framework to present the results of the URL testing and some related
+statistics.
 
-The source code for both cmr_monitor.pl and the Monitor Web App are open source and freely available upon request.
-About cmr_monitor.pl
+The source code for both cmr_monitor.pl and the Monitor Web App are
+open source and freely available upon request.  About cmr_monitor.pl
 
-./cmr_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX|--osdd_only|--granule_only]
+    ./cmr_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX|--osdd_only|--granule_only]
 
-Monitor CMR and remote CWIC hosts for responses. Usually run out of cron. There is a single entry available (see --source). If neither --source nor --batch are specified, presents a menu for selecting a single source.
+Monitor CMR and remote CWIC hosts for responses. Usually run out of
+cron. There is a single entry available (see `--source`). If neither
+`--source` nor `--batch` are specified, the program presents a menu
+for selecting a single source.
 
             --help
             Show this help
@@ -280,18 +311,18 @@ Monitor CMR and remote CWIC hosts for responses. Usually run out of cron. There 
 
 The Monitor Web App provides 6 tabs:
 
-Home/Statistics
-    Current summary statistics on testing results for the CWIC data partners
-Results
-    The full log of the testing results table from the Monitor database
-Sources
-    Contents of the monitoring table of sources
-Links
-    Stored OpenSearch links for the CWIC data partners
-About
-    General information about the CWIC project and the Monitoring application
-Contact Us
-    Contact information for the CWIC team
+    Home/Statistics
+        Current summary statistics on testing results for the CWIC data partners
+    Results
+        The full log of the testing results table from the Monitor database
+    Sources
+        Contents of the monitoring table of sources
+    Links
+        Stored OpenSearch links for the CWIC data partners
+    About
+        General information about the CWIC project and the Monitoring application
+    Contact Us
+        Contact information for the CWIC team
 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
