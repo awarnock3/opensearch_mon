@@ -7,13 +7,14 @@
 *** See the bottom of this document for the declaration of the reference variables
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
+
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
+-->
 
 
 
@@ -101,29 +102,47 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
+The command-line script requires a number of Perl modules. All should be easily available from MetaCPAN.org
+
+-  Authen::SASL qw(Perl);
+-  Carp;
+-  Config::Tiny;
+-  DBI;
+-  Data::Dumper::Concise; # Only used for debugging
+-  Email::Sender::Transport::SMTP;
+-  Email::Stuffer;
+-  Exporter;
+-  FindBin;
+-  Getopt::Long;
+-  Init qw{$config $inifile};
+-  LWP::Protocol::https;
+-  LWP::UserAgent ();
+-  LWP;
+-  MIME::Types;
+-  Net::SMTP 3.0;
+-  Pod::Usage;
+-  Term::ReadKey;
+-  WWW::Mechanize::Timed;
+-  XML::LibXML::PrettyPrint;
+-  XML::LibXML;
 
 ### Installation
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/awarnock3/opensearch-mon.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
+Once you have cloned the repository into your desired location (I use /usr/local/src) and installed the necessary modules, the command-line script os_monitor.pl is ready to use. I run it out of cron every 12 hours as a sanity check.
+
+The repository also contains the Dancer2 modules to run the web interface. It is in ./web/Monitor. This is the place I suggest installing Dancer2. That will keep all of the code from this repository in one place, making updates easy.
 
 ### Create the database
+
+The first step is to create the database. There are 4 tables to create, 3 of which require populating with data of your choice. The file ./sql/os_monitor.sql will create the tables. The other 3 individual *.sql files will populate the database with sample data.
+
+- Table init
+
+- Table source
+
+- Table links
+
+- Table monitor
 
 $ mysql --user <username> -p
 Enter password: 
@@ -199,12 +218,24 @@ or MariaDB, it will look like this:
 
 ### Configure the Web Server
 
+I configure Apache to point to the osmon web app by defining a ScriptAlias in httpd.conf:
+
+<pre>
+    ScriptAlias /osmon/ /usr/local/src/os_monitor/web/Monitor/public/dispatch.cgi/
+    <Directory "/usr/local/src/os_monitor/web/Monitor/public">
+       AllowOverride None
+       Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+       Require all granted
+       AddHandler cgi-script .cgi
+    </Directory>
+</pre>
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-
+### os_monitor.pl
 
 This system is built to monitor the transition of the CWIC project from operational mode into part of the NASA CMR task. The former CWIC partner sites are tested here on a regular basis to help with early diagnosis of potential problems.
 
@@ -243,10 +274,11 @@ Monitor CMR and remote CWIC hosts for responses. Usually run out of cron. There 
 
             --granule_only
             Just test the granule request link (skip the OSDD)
-            
 
-About the Monitor Web Application
-The Monitor Web App provides 5 tabs:
+### Monitor Web Application
+
+
+The Monitor Web App provides 6 tabs:
 
 Home/Statistics
     Current summary statistics on testing results for the CWIC data partners
@@ -262,11 +294,7 @@ Contact Us
     Contact information for the CWIC team
 
 
-_For more examples, please refer to the [Documentation](https://example.com)_
-
 <p align="right">(<a href="#top">back to top</a>)</p>
-
-
 
 <!-- ROADMAP 
 ## Roadmap
@@ -312,24 +340,34 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
+<!--
 Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com
-
+-->
 Project Link: [https://github.com/awarnock3/opensearch-mon](https://github.com/awarnock3/opensearch_mon)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
 
-<!-- ACKNOWLEDGMENTS
 ## Acknowledgments
 
+This work has been performed in support of the CEOS WGISS group under contract from NASA to SSAI, Inc.
+
+The [https://ceos.org/ourwork/workinggroups/wgiss/access/cwic/](CEOS/WGISS Integrated
+Catalog) (CWIC) is supported by [https://www.awcubed.com/](A/WWW Enterprises)
+under subcontract from [https://ssaihq.com](Science Systems and Applications, Inc.) (SSAI) on behalf of NASA.
+
+
+<!-- ACKNOWLEDGMENTS
+
 * []()
 * []()
 * []()
 
-<p align="right">(<a href="#top">back to top</a>)</p>
 
 -->
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links
