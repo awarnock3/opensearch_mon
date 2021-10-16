@@ -79,24 +79,27 @@
 
 <!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->
 
-This system is built to monitor the transition of the CWIC project
-from operational mode into part of the NASA CMR task. The former CWIC
-partner sites are tested here on a regular basis to help with early
-diagnosis of potential problems.
+This project was originally built to monitor the transition of the
+CWIC project from operational mode into part of the NASA CMR task. The
+former CWIC partner sites are tested here on a regular basis to help
+with early diagnosis of potential problems. It can be used as a
+general-purpose monitoring application for OpenSearch servers,
+particularly those which complay with the [CEOS OpenSearch Best
+Practices](https://ceos.org/ourwork/workinggroups/wgiss/access/opensearch/)
+documentation.
 
 The Monitoring project consists of three components - a monitoring
-database, a command-line perl program (cmr_monitor.pl) which populates
-the database by testing various OpenSearch URLs for CWIC data
-partners, and a web application (Monitor) using the perl-based Dancer2
-framework to present the results of the URL testing and some related
-statistics.
+database, a command-line perl program (os_monitor.pl) which populates
+the database by testing various OpenSearch URLs, and a web application
+(Monitor) using the perl-based Dancer2 framework to present the
+results of the URL testing and some related statistics.
 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
 
-### Built With
+### Build With
 
 * [Dancer2](https://metacpan.org/pod/Dancer2)
 * [JQuery](https://jquery.com)
@@ -137,12 +140,12 @@ be easily available from MetaCPAN.org
 ### Installation
 
 Once you have cloned the repository into your desired location (I use
-/usr/local/src) and installed the necessary modules, the command-line
-script os_monitor.pl is ready to use. I run it out of cron every 12
+`/usr/local/src`) and installed the necessary modules, the command-line
+script `os_monitor.pl` is ready to use. I run it out of cron every 12
 hours as a sanity check.
 
 The repository also contains the Dancer2 modules to run the web
-interface. It is in ./web/Monitor. This is the place I suggest
+interface. It is in `./web/Monitor`. This is the place I suggest
 installing Dancer2. That will keep all of the code from this
 repository in one place, making updates easy.
 
@@ -150,16 +153,24 @@ repository in one place, making updates easy.
 
 The first step is to create the database. There are 4 tables to
 create, 3 of which require populating with data of your choice. The
-file ./sql/os_monitor.sql will create the tables. The other 3
+file `./sql/os_monitor.sql` will create the tables. The other 3
 individual *.sql files will populate the database with sample data.
 
 - Table *init*
 
+    Contains basic configuration data, including the path to the `os_monitor.pl` script
+
 - Table *source*
+
+    Contains the OpenSearch sources to be monitored
 
 - Table *links*
 
+    Contains the base, OSDD and granule request URLs for the sources in *source*
+
 - Table *monitor*
+
+    Populated by running `os_monitor.pl` on the sources in the *source* table
 
 
         $ mysql --user <username> -p
@@ -257,24 +268,10 @@ I configure Apache to point to the osmon web app by defining a ScriptAlias in ht
 
 ### os_monitor.pl
 
-This system is built to monitor the transition of the CWIC project
-from operational mode into part of the NASA CMR task. The former CWIC
-partner sites are tested here on a regular basis to help with early
-diagnosis of potential problems.
 
-The Monitoring project consists of three components - a monitoring
-database, a command-line perl program (cmr_monitor.pl) which populates
-the database by testing various OpenSearch URLs for CWIC data
-partners, and a web application (Monitor) using the perl-based Dancer2
-framework to present the results of the URL testing and some related
-statistics.
+    ./os_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX|--osdd_only|--granule_only]
 
-The source code for both cmr_monitor.pl and the Monitor Web App are
-open source and freely available upon request.  About cmr_monitor.pl
-
-    ./cmr_monitor.pl [--help|--man|--verbose|--batch|--save|--source=XXX|--osdd_only|--granule_only]
-
-Monitor CMR and remote CWIC hosts for responses. Usually run out of
+Monitor remote OpenSearch hosts for responses. Usually run out of
 cron. There is a single entry available (see `--source`). If neither
 `--source` nor `--batch` are specified, the program presents a menu
 for selecting a single source.
@@ -382,11 +379,9 @@ Project Link: [https://github.com/awarnock3/opensearch-mon](https://github.com/a
 
 ## Acknowledgments
 
-This work has been performed in support of the CEOS WGISS group under contract from NASA to SSAI, Inc.
-
-The [https://ceos.org/ourwork/workinggroups/wgiss/access/cwic/](CEOS/WGISS Integrated
-Catalog) (CWIC) is supported by [https://www.awcubed.com/](A/WWW Enterprises)
-under subcontract from [https://ssaihq.com](Science Systems and Applications, Inc.) (SSAI) on behalf of NASA.
+The [CEOS/WGISS Integrated Catalog](https://ceos.org/ourwork/workinggroups/wgiss/access/cwic/) (CWIC)
+is supported by [A/WWW Enterprises](https://www.awcubed.com/)
+under subcontract from [Science Systems and Applications, Inc.](https://ssaihq.com) (SSAI) on behalf of [NASA](https://www.nasa.gov).
 
 
 <!-- ACKNOWLEDGMENTS
